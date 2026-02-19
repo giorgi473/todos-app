@@ -1,14 +1,14 @@
 import Wrapper from '@/components/shared/Wrapper';
-import List from '../components/List';
+import TodoList from '@/features/homo/components/TodoList';
 
 function HomePage() {
   return (
     <div>
-        <Wrapper className='mx-auto max-w-2xl'>
-            <List/>
-        </Wrapper>
+      <Wrapper className="mx-auto max-w-2xl">
+        <TodoList />
+      </Wrapper>
     </div>
-  )
+  );
 }
 
 export default HomePage;

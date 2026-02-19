@@ -1,11 +1,11 @@
-import HomePage from '@/features/homo/view/homepage-view'
+import HomePage from '@/features/homo/view/homepage-view';
 
 function page() {
   return (
     <div>
-      <HomePage/>
+      <HomePage />
     </div>
-  )
+  );
 }
 
 export default page;

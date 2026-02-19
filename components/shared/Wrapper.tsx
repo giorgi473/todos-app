@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 function Wrapper({
   children,
@@ -7,13 +7,7 @@ function Wrapper({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={`container w-full ${className}`}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`container w-full ${className}`}>{children}</div>;
 }
 
 export default Wrapper;
