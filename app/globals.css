@@ -124,3 +124,44 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+
+
+/* WebKit ბრაუზერებისთვის (Chrome, Safari, Edge) */
+input.keep-bg:-webkit-autofill,
+input.keep-bg:-webkit-autofill:hover,
+input.keep-bg:-webkit-autofill:focus,
+textarea.keep-bg:-webkit-autofill,
+textarea.keep-bg:-webkit-autofill:hover,
+textarea.keep-bg:-webkit-autofill:focus,
+select.keep-bg:-webkit-autofill,
+select.keep-bg:-webkit-autofill:hover,
+select.keep-bg:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e5e5e5;
+  -webkit-box-shadow: 0 0 0px 1000px #18181b inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: whitesmoke;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#e94c09);
+  z-index: 50px;
+}
+.mobile-menu-overlay::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.mobile-menu-overlay::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-menu-overlay::-webkit-scrollbar-thumb {
+  background: transparent;
+}

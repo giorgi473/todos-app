@@ -6,6 +6,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQueryState } from "nuqs";
 import {
   CheckCircle2,
   Circle,
@@ -15,20 +16,18 @@ import {
   Loader2,
 } from "lucide-react";
 
-// ─── Priority Config ──────────────────────────────────────────────────────────
-
 const priorityConfig = {
   low:    { label: "Low",    dot: "bg-emerald-400", badge: "text-emerald-600 bg-emerald-50 border-emerald-200" },
   medium: { label: "Medium", dot: "bg-amber-400",   badge: "text-amber-600 bg-amber-50 border-amber-200"     },
   high:   { label: "High",   dot: "bg-rose-400",    badge: "text-rose-600 bg-rose-50 border-rose-200"        },
 } as const;
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function List() {
   const todos = useQuery(api.todos.list, {});
   const toggleComplete = useMutation(api.todos.toggleComplete);
   const remove = useMutation(api.todos.remove);
+  const [q] = useQueryState("search");
+  const search = q?.toLowerCase() ?? "";
 
   const handleToggle = async (id: Id<"todos">) => {
     try {
@@ -47,8 +46,13 @@ export default function List() {
     }
   };
 
-  const pending = todos?.filter((t) => !t.completed) ?? [];
-  const completed = todos?.filter((t) => t.completed) ?? [];
+  const filtered = todos?.filter((t) =>
+    t.title.toLowerCase().includes(search) ||
+    t.description?.toLowerCase().includes(search)
+  ) ?? [];
+
+  const pending = filtered.filter((t) => !t.completed);
+  const completed = filtered.filter((t) => t.completed);
 
   return (
     <main className="min-h-screen bg-background">
@@ -58,6 +62,11 @@ export default function List() {
         {todos !== undefined && (
           <p className="text-xs text-muted-foreground">
             {pending.length} remaining · {completed.length} done
+            {search && (
+              <span className="ml-1 text-muted-foreground/60">
+                · &quot;{search}&quot; filtered
+              </span>
+            )}
           </p>
         )}
 
@@ -69,15 +78,26 @@ export default function List() {
         )}
 
         {/* ── Empty State ── */}
-        {todos !== undefined && todos.length === 0 && (
+        {todos !== undefined && filtered.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-24 text-center">
             <div className="rounded-full bg-muted p-4">
               <Inbox className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="font-medium">No todos yet</p>
-            <p className="text-sm text-muted-foreground">
-              Click "New Todo" to add your first task.
-            </p>
+            {search ? (
+              <>
+                <p className="font-medium">No results found</p>
+                <p className="text-sm text-muted-foreground">
+                  No todos match &quot;{search}&quot;.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">No todos yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Click &quot;New Todo&quot; to add your first task.
+                </p>
+              </>
+            )}
           </div>
         )}
 
@@ -122,8 +142,6 @@ export default function List() {
     </main>
   );
 }
-
-// ─── TodoCard ─────────────────────────────────────────────────────────────────
 
 interface Todo {
   _id: Id<"todos">;
