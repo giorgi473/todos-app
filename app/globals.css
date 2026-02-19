@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -125,22 +125,22 @@
   }
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #171717 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
 
-
-
-/* WebKit ბრაუზერებისთვის (Chrome, Safari, Edge) */
-input.keep-bg:-webkit-autofill,
-input.keep-bg:-webkit-autofill:hover,
-input.keep-bg:-webkit-autofill:focus,
-textarea.keep-bg:-webkit-autofill,
-textarea.keep-bg:-webkit-autofill:hover,
-textarea.keep-bg:-webkit-autofill:focus,
-select.keep-bg:-webkit-autofill,
-select.keep-bg:-webkit-autofill:hover,
-select.keep-bg:-webkit-autofill:focus {
-  -webkit-text-fill-color: #e5e5e5;
-  -webkit-box-shadow: 0 0 0px 1000px #18181b inset;
-  transition: background-color 9999s ease-in-out 0s;
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px black inset !important;
+  -webkit-text-fill-color: #f5f5f5 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 ::-webkit-scrollbar {
