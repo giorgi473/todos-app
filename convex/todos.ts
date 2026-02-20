@@ -1,27 +1,43 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 
-// პატარა helper, რომ patch ობიექტი იყოს „partial“
+const PAGE_SIZE = 5;
+
 function partial<T>(fields: T) {
   return fields as T;
 }
-
-// ყველა todo-ს მიღება
 export const list = query({
-  args: { completed: v.optional(v.boolean()) },
-  handler: async (ctx, { completed }) => {
+  args: {
+    page: v.optional(v.number()),
+    completed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { page, completed }) => {
+    const currentPage = page && page > 0 ? page : 1;
+    const skip = (currentPage - 1) * PAGE_SIZE;
+
+    let q = ctx.db.query('todos').order('desc');
+
     if (completed !== undefined) {
-      return await ctx.db
+      q = ctx.db
         .query('todos')
-        .withIndex('by_completed', (q) => q.eq('completed', completed))
-        .order('desc')
-        .collect();
+        .withIndex('by_completed', (ix) => ix.eq('completed', completed))
+        .order('desc');
     }
-    return await ctx.db.query('todos').order('desc').collect();
+
+    const all = await q.collect();
+    const total = all.length;
+
+    const todos = all.slice(skip, skip + PAGE_SIZE);
+
+    return {
+      todos,
+      total,
+      pageSize: PAGE_SIZE,
+      page: currentPage,
+    };
   },
 });
 
-// ერთის მიღება
 export const get = query({
   args: { id: v.id('todos') },
   handler: async (ctx, { id }) => {
@@ -29,7 +45,6 @@ export const get = query({
   },
 });
 
-// შექმნა
 export const create = mutation({
   args: {
     title: v.string(),
@@ -46,7 +61,6 @@ export const create = mutation({
   },
 });
 
-// განახლება – generalized patch
 export const update = mutation({
   args: {
     id: v.id('todos'),
@@ -68,7 +82,6 @@ export const update = mutation({
   },
 });
 
-// completed toggle
 export const toggleComplete = mutation({
   args: { id: v.id('todos') },
   handler: async (ctx, { id }) => {
@@ -78,7 +91,6 @@ export const toggleComplete = mutation({
   },
 });
 
-// წაშლა
 export const remove = mutation({
   args: { id: v.id('todos') },
   handler: async (ctx, { id }) => {

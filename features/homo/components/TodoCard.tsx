@@ -107,7 +107,7 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-48 rounded-none border-border/50 backdrop-blur-xl bg-card/95 shadow-none"
+          className="rounded-none border-border/50 backdrop-blur-xl bg-card/95 shadow-none"
           align="end"
           sideOffset={4}
         >
