@@ -1,7 +1,7 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 function partial<T>(fields: T) {
   return fields as T;
