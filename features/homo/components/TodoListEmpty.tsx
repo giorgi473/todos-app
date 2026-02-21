@@ -16,14 +16,14 @@ export function TodoListEmpty({ search }: TodoListEmptyProps) {
             No results found
           </h2>
           <p className="text-xl text-muted-foreground/80 max-w-md">
-            No todos match "{search}".
+            No todos match &quot;{search}&quot;.
           </p>
         </>
       ) : (
         <>
           <h2 className="text-3xl font-bold text-foreground">No todos yet</h2>
           <p className="text-xl text-muted-foreground/80 max-w-md">
-            Click "New Todo" to add your first task.
+            Click &quot;New Todo&quot; to add your first task.
           </p>
         </>
       )}

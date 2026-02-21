@@ -1,6 +1,7 @@
 'use client';
 
 import { Id } from '@/convex/_generated/dataModel';
+import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -39,8 +40,10 @@ interface TodoCardProps {
 
 export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
   const p = priorityConfig[todo.priority];
-  const isOverdue =
-    !todo.completed && todo.dueDate && todo.dueDate < Date.now();
+  const isOverdue = useMemo(
+    () => !todo.completed && todo.dueDate && todo.dueDate < Date.now(), // eslint-disable-line react-hooks/purity
+    [todo.completed, todo.dueDate],
+  );
 
   return (
     <li className="group flex items-start gap-4 border-b-2 py-5 select-none">

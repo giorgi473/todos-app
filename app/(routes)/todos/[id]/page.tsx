@@ -1,8 +1,9 @@
-// app/(routes)/todos/[id]/page.tsx
 'use client';
+
 import React from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { useRouter } from 'next/navigation';
 import TodoForm from '@/features/homo/components/TodoForm';
 import { ArrowLeft } from 'lucide-react';
@@ -28,7 +29,7 @@ export default function EditTodoPage({ params }: { params: ParamsPromise }) {
     api.todos.get,
     resolvedId
       ? {
-          id: resolvedId as any,
+          id: resolvedId as Id<'todos'>,
         }
       : 'skip',
   );

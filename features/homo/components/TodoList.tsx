@@ -1,25 +1,19 @@
 'use client';
 
-import { useTransition, useOptimistic, useEffect, useState } from 'react';
+import { useTransition, useEffect, useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useQueryStates, parseAsInteger, parseAsString } from 'nuqs';
+import { toast } from 'sonner';
 import { TodoSection } from '@/features/homo/components/TodoSection';
 import { TodoStats } from '@/features/homo/components/TodoStats';
 import { TodoListEmpty } from '@/features/homo/components/TodoListEmpty';
 import { TodoListSkeleton } from '@/features/homo/components/TodoListSkeleton';
-import { toast } from 'sonner';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Pagination } from '@/components/shared/Pagination';
 
 type Priority = 'low' | 'medium' | 'high';
+
 interface Todo {
   _id: Id<'todos'>;
   title: string;
@@ -37,68 +31,57 @@ export default function TodoList() {
   });
 
   const searchStr = search.toLowerCase();
-
   const result = useQuery(api.todos.list, { page }) ?? undefined;
 
   const toggleComplete = useMutation(api.todos.toggleComplete);
   const remove = useMutation(api.todos.remove);
 
-  const [lastResult, setLastResult] = useState<typeof result>(undefined);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
-    if (result) {
-      setLastResult(result);
-      setHasLoaded(true);
-    }
+    if (!result) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTodos((result.todos ?? []) as Todo[]);
+    setTotal(result.total ?? 0);
+    setPageSize(result.pageSize ?? 10);
+    setHasLoaded(true);
   }, [result]);
-
-  const activeResult = lastResult ?? result;
-  const [optimisticTodos, updateOptimisticTodos] = useOptimistic(
-    (activeResult?.todos ?? []) as Todo[],
-    (
-      current: Todo[],
-      action:
-        | { type: 'toggle'; id: Id<'todos'> }
-        | { type: 'delete'; id: Id<'todos'> },
-    ) => {
-      switch (action.type) {
-        case 'toggle':
-          return current.map((t) =>
-            t._id === action.id ? { ...t, completed: !t.completed } : t,
-          );
-        case 'delete':
-          return current.filter((t) => t._id !== action.id);
-        default:
-          return current;
-      }
-    },
-  );
 
   const [, startTransition] = useTransition();
 
-  const handleToggle = async (id: Id<'todos'>) => {
-    updateOptimisticTodos({ type: 'toggle', id });
-    try {
-      await toggleComplete({ id });
-    } catch {
+  const handleToggle = (id: Id<'todos'>) => {
+    setTodos((current) =>
+      current.map((t) =>
+        t._id === id ? { ...t, completed: !t.completed } : t,
+      ),
+    );
+
+    toggleComplete({ id }).catch(() => {
       toast.error('Failed to update todo.');
-    }
+      setTodos((current) =>
+        current.map((t) =>
+          t._id === id ? { ...t, completed: !t.completed } : t,
+        ),
+      );
+    });
   };
 
-  const handleDelete = async (id: Id<'todos'>) => {
-    updateOptimisticTodos({ type: 'delete', id });
-    try {
-      await remove({ id });
-      toast.success('Todo deleted.');
-    } catch {
-      toast.error('Failed to delete todo.');
-    }
+  const handleDelete = (id: Id<'todos'>) => {
+    setTodos((current) => current.filter((t) => t._id !== id));
+
+    remove({ id })
+      .then(() => {
+        toast.success('Todo deleted.');
+      })
+      .catch(() => {
+        toast.error('Failed to delete todo.');
+      });
   };
 
   const goToPage = (p: number) => {
-    const total = activeResult?.total ?? 0;
-    const pageSize = activeResult?.pageSize ?? 10;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     if (p < 1 || p > totalPages) return;
 
@@ -107,7 +90,7 @@ export default function TodoList() {
     });
   };
 
-  if (!hasLoaded && !activeResult) {
+  if (!hasLoaded && !result) {
     return (
       <main className="min-h-screen">
         <TodoListSkeleton />
@@ -115,16 +98,8 @@ export default function TodoList() {
     );
   }
 
-  if (!activeResult) {
-    return null;
-  }
+  if (!result && todos.length === 0) return null;
 
-  const todos = (optimisticTodos.length
-    ? optimisticTodos
-    : (activeResult.todos ?? [])) as Todo[];
-
-  const total = activeResult.total ?? 0;
-  const pageSize = activeResult.pageSize ?? 10;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const filtered =
@@ -136,8 +111,6 @@ export default function TodoList() {
 
   const pending = filtered.filter((t) => !t.completed);
   const completed = filtered.filter((t) => t.completed);
-
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <main className="min-h-screen">
@@ -170,46 +143,13 @@ export default function TodoList() {
             isCompleted
           />
         )}
-
         {totalPages > 1 && (
-          <div className="pt-8">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => goToPage(page - 1)}
-                    className={
-                      page === 1
-                        ? 'pointer-events-none opacity-50 cursor-not-allowed'
-                        : ''
-                    }
-                  />
-                </PaginationItem>
-
-                {pageNumbers.map((p) => (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      onClick={() => goToPage(p)}
-                      isActive={p === page}
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => goToPage(page + 1)}
-                    className={
-                      page === totalPages
-                        ? 'pointer-events-none opacity-50 cursor-not-allowed'
-                        : ''
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <Pagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={goToPage}
+          />
         )}
       </div>
     </main>

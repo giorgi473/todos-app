@@ -11,7 +11,7 @@ export function TodoStats({ pending, completed, search }: TodoStatsProps) {
         {pending} remaining · {completed} done
         {search && (
           <span className="ml-3 text-xs text-muted-foreground bg-muted px-3 py-1">
-            "{search}" filtered
+            &quot;{search}&quot; filtered
           </span>
         )}
       </p>

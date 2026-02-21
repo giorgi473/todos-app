@@ -20,7 +20,7 @@ type SearchFormValues = z.infer<typeof searchSchema>;
 
 export default function Header() {
   const router = useRouter();
-  const [q, setQ] = useQueryState('search');
+  const [q] = useQueryState('search');
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchSchema),
