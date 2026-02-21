@@ -46,7 +46,7 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
   );
 
   return (
-    <li className="group flex items-start gap-4 border-b-2 py-5 select-none">
+    <li className="group flex items-start gap-4 border-b-2 px-4 sm:px-0 py-5 select-none">
       <button
         onClick={() => onToggle(todo._id)}
         className="mt-1 cursor-pointer"

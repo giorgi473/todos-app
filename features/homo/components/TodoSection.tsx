@@ -23,8 +23,6 @@ interface TodoSectionProps {
 }
 
 export function TodoSection({
-  title,
-  count,
   todos,
   onToggle,
   onDelete,
@@ -32,13 +30,6 @@ export function TodoSection({
 }: TodoSectionProps) {
   return (
     <section className="space-y-4">
-      <h2
-        className={`flex items-center gap-2 text-2xl font-bold tracking-tight px-2 ${isCompleted ? 'text-foreground/70' : 'text-foreground'}`}
-      >
-        <div className="h-px flex-1 bg-linear-to-r from-transparent via-border to-transparent" />
-        {title} · {count}
-        <div className="h-px flex-1 bg-linear-to-r from-transparent via-border to-transparent" />
-      </h2>
       <ul className={`space-y-4 ${isCompleted ? 'opacity-70' : ''}`}>
         {todos.map((todo) => (
           <TodoCard

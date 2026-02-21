@@ -144,7 +144,7 @@ export default function TodoForm({
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full max-w-2xl px-5 md:px-0">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
