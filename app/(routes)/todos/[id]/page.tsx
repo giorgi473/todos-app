@@ -5,25 +5,40 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import TodoForm from '@/features/homo/components/TodoForm';
 import { ArrowLeft } from 'lucide-react';
 
 type ParamsPromise = Promise<{ id: string }>;
+function isValidConvexId(id: string): boolean {
+  return /^[a-z0-9]{20,}$/.test(id);
+}
 
 export default function EditTodoPage({ params }: { params: ParamsPromise }) {
   const router = useRouter();
   const [resolvedId, setResolvedId] = React.useState<string | null>(null);
+  const [isInvalidId, setIsInvalidId] = React.useState(false);
 
   React.useEffect(() => {
     let active = true;
     (async () => {
       const { id } = await params;
-      if (active) setResolvedId(id);
+      if (active) {
+        if (!isValidConvexId(id)) {
+          setIsInvalidId(true);
+        } else {
+          setResolvedId(id);
+        }
+      }
     })();
     return () => {
       active = false;
     };
   }, [params]);
+
+  if (isInvalidId) {
+    notFound();
+  }
 
   const todo = useQuery(
     api.todos.get,
@@ -35,14 +50,16 @@ export default function EditTodoPage({ params }: { params: ParamsPromise }) {
   );
 
   if (!resolvedId || todo === undefined) return <div>Loading...</div>;
-  if (!todo) return <div>Todo not found</div>;
+  if (!todo) {
+    notFound();
+  }
 
   return (
     <>
       <header className="bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex items-center gap-3 px-3 py-4 select-none">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/todos')}
             aria-label="Back"
             className="cursor-pointer select-none"
           >
@@ -60,7 +77,7 @@ export default function EditTodoPage({ params }: { params: ParamsPromise }) {
           priority: todo.priority,
           dueDate: todo.dueDate,
         }}
-        onSuccess={() => router.push('/')}
+        onSuccess={() => router.push('/todos')}
       />
     </>
   );

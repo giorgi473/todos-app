@@ -84,6 +84,12 @@ export default function TodoForm({
   const create = useMutation(api.todos.create);
   const update = useMutation(api.todos.update);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = localStorage.getItem('userId');
+    setUserId(id);
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -116,11 +122,16 @@ export default function TodoForm({
   async function onSubmit(values: FormValues) {
     try {
       if (mode === 'create') {
+        if (!userId) {
+          toast.error('User ID not found. Please log in again.');
+          return;
+        }
         await create({
           title: values.title,
           description: values.description || undefined,
           priority: values.priority,
           dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
+          userId,
         });
         toast.success('Todo added successfully! ✓');
       } else if (mode === 'edit' && todoId) {

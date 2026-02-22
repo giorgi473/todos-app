@@ -10,23 +10,44 @@ export const list = query({
   args: {
     page: v.optional(v.number()),
     completed: v.optional(v.boolean()),
+    userId: v.optional(v.string()),
   },
-  handler: async (ctx, { page, completed }) => {
+  handler: async (ctx, { page, completed, userId }) => {
+    if (!userId) {
+      return {
+        todos: [],
+        total: 0,
+        pageSize: PAGE_SIZE,
+        page: 1,
+      };
+    }
+
     const currentPage = page && page > 0 ? page : 1;
     const skip = (currentPage - 1) * PAGE_SIZE;
 
-    let q = ctx.db.query('todos').order('desc');
+    let q = ctx.db
+      .query('todos')
+      .withIndex('by_user', (ix) => ix.eq('userId', userId))
+      .order('desc');
 
     if (completed !== undefined) {
-      q = ctx.db
+      const allByUser = await ctx.db
         .query('todos')
-        .withIndex('by_completed', (ix) => ix.eq('completed', completed))
-        .order('desc');
+        .withIndex('by_user', (ix) => ix.eq('userId', userId))
+        .collect();
+      const filtered = allByUser.filter((t) => t.completed === completed);
+      const total = filtered.length;
+      const todos = filtered.slice(skip, skip + PAGE_SIZE);
+      return {
+        todos,
+        total,
+        pageSize: PAGE_SIZE,
+        page: currentPage,
+      };
     }
 
     const all = await q.collect();
     const total = all.length;
-
     const todos = all.slice(skip, skip + PAGE_SIZE);
 
     return {
@@ -51,10 +72,15 @@ export const create = mutation({
     description: v.optional(v.string()),
     priority: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
     dueDate: v.optional(v.number()),
+    userId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, { title, description, priority, dueDate, userId }) => {
     return await ctx.db.insert('todos', {
-      ...args,
+      title,
+      description,
+      priority,
+      dueDate,
+      userId,
       completed: false,
       createdAt: Date.now(),
     });

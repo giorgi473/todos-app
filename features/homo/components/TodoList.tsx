@@ -25,13 +25,21 @@ interface Todo {
 }
 
 export default function TodoList() {
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = localStorage.getItem('userId');
+    setUserId(id);
+  }, []);
+
   const [{ search, page }, setQuery] = useQueryStates({
     search: parseAsString.withDefault(''),
     page: parseAsInteger.withDefault(1),
   });
 
   const searchStr = search.toLowerCase();
-  const result = useQuery(api.todos.list, { page }) ?? undefined;
+  const result =
+    useQuery(api.todos.list, userId ? { page, userId } : 'skip') ?? undefined;
 
   const toggleComplete = useMutation(api.todos.toggleComplete);
   const remove = useMutation(api.todos.remove);

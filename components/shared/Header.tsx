@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { ModeToggle } from '@/components/ModeToggle';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { UnderlinedFieldWrapper } from '@/components/shared/UnderlinedFieldWrapper';
+import { UserMenuButton } from '@/components/shared/UserMenuButton';
 
 const searchSchema = z.object({
   search: z.string(),
@@ -20,6 +21,7 @@ type SearchFormValues = z.infer<typeof searchSchema>;
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [q] = useQueryState('search');
 
   const form = useForm<SearchFormValues>({
@@ -31,11 +33,16 @@ export default function Header() {
 
   const handleSearchSubmit = (values: SearchFormValues) => {
     if (values.search.trim()) {
-      router.push(`/?search=${encodeURIComponent(values.search)}`);
+      router.push(`/todos?search=${encodeURIComponent(values.search)}`);
     } else {
-      router.push('/');
+      router.push('/todos');
     }
   };
+
+  // Hide header on auth pages
+  if (pathname === '/sign-up' || pathname === '/sign-in') {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b bg-white dark:bg-black">
@@ -84,12 +91,13 @@ export default function Header() {
           <ModeToggle />
           <Button
             variant={'orange'}
-            onClick={() => router.push('/todos')}
+            onClick={() => router.push('/todos/new')}
             className="gap-1.5 cursor-pointer rounded-none hover:bg-amber-500 transition-all duration-300 ease-in-out"
           >
             <Plus className="h-5 w-5" />
             New Todo
           </Button>
+          <UserMenuButton />
         </div>
       </div>
     </header>
