@@ -14,10 +14,10 @@ export function UnderlinedFieldWrapper({
   return (
     <div className="relative group">
       {children}
-      <span className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-neutral-800" />
+      <span className="pointer-events-none absolute bottom-0 left-0 h-px w-full hidden md:flex bg-neutral-800" />
       <span
         className={[
-          'pointer-events-none absolute bottom-0 left-0 h-px w-full origin-left',
+          'pointer-events-none absolute bottom-0 left-0 h-px w-full hidden md:flex origin-left',
           hasError
             ? 'bg-red-500 scale-x-100'
             : 'bg-linear-to-r from-[#ff9D4D] to-[#ff9D4D] scale-x-0 group-focus-within:scale-x-100 group-hover:scale-x-100 transition-transform duration-300 ease-out',
@@ -26,7 +26,7 @@ export function UnderlinedFieldWrapper({
       {icon && (
         <span
           className={[
-            'absolute right-0 top-1/2 -translate-y-1/2 pointer-events-auto',
+            'absolute right-0 top-1/2 flex -translate-y-1/2 pointer-events-auto',
             hasError
               ? 'text-red-400'
               : 'text-zinc-500 group-hover:text-[#ff9D4D] transition-colors',
