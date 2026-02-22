@@ -9,7 +9,6 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as seed from "../seed.js";
 import type * as todos from "../todos.js";
 
 import type {
@@ -20,7 +19,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  seed: typeof seed;
   todos: typeof todos;
 }>;
 
