@@ -29,7 +29,6 @@ import {
 import { Loader2 } from 'lucide-react';
 import { signUpSchema } from '../schemas/auth-schemas';
 
-
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function RegisterForm() {
