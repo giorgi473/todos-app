@@ -1,11 +1,19 @@
-import HomePage from '@/features/homo/view/homepage-view';
+'use client';
 
-function page() {
-  return (
-    <div>
-      <HomePage />
-    </div>
-  );
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+export default function RootPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      router.push('/todos');
+    } else {
+      router.push('/sign-up');
+    }
+  }, [router]);
+
+  return null;
 }
-
-export default page;
