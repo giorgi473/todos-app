@@ -25,5 +25,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return null;
   }
 
-  return <div className="">{children}</div>;
+  return <div>{children}</div>;
 }
