@@ -1,6 +1,12 @@
 'use client';
 
-import { useTransition, useEffect, useState } from 'react';
+import {
+  useTransition,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -44,23 +50,23 @@ export default function TodoList() {
   const toggleComplete = useMutation(api.todos.toggleComplete);
   const remove = useMutation(api.todos.remove);
 
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const hasOptimisticUpdate = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!result) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTodos((result.todos ?? []) as Todo[]);
     setTotal(result.total ?? 0);
     setPageSize(result.pageSize ?? 10);
-    setHasLoaded(true);
+    hasOptimisticUpdate.current = false;
   }, [result]);
 
   const [, startTransition] = useTransition();
 
   const handleToggle = (id: Id<'todos'>) => {
+    hasOptimisticUpdate.current = true;
     setTodos((current) =>
       current.map((t) =>
         t._id === id ? { ...t, completed: !t.completed } : t,
@@ -78,6 +84,7 @@ export default function TodoList() {
   };
 
   const handleDelete = (id: Id<'todos'>) => {
+    hasOptimisticUpdate.current = true;
     setTodos((current) => current.filter((t) => t._id !== id));
 
     remove({ id })
@@ -98,20 +105,26 @@ export default function TodoList() {
     });
   };
 
-  if (!hasLoaded && !result) {
+  const isLoading = userId == null || (userId && result === undefined);
+  const displayTodos =
+    hasOptimisticUpdate.current
+      ? todos
+      : (result ? ((result.todos ?? []) as Todo[]) : todos);
+  const displayTotal = result ? (result.total ?? 0) : total;
+  const displayPageSize = result ? (result.pageSize ?? 10) : pageSize;
+
+  if (isLoading) {
     return (
-      <main className="min-h-screen">
+      <main className="min-h-screen w-full">
         <TodoListSkeleton />
       </main>
     );
   }
 
-  if (!result && todos.length === 0) return null;
-
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Math.max(1, Math.ceil(displayTotal / displayPageSize));
 
   const filtered =
-    todos.filter(
+    displayTodos.filter(
       (t) =>
         t.title.toLowerCase().includes(searchStr) ||
         t.description?.toLowerCase().includes(searchStr),
@@ -121,8 +134,8 @@ export default function TodoList() {
   const completed = filtered.filter((t) => t.completed);
 
   return (
-    <main className="min-h-screen">
-      <div className="py-12 space-y-12">
+    <main className="min-h-screen w-full">
+      <div className="w-full py-12 space-y-12">
         <TodoStats
           pending={pending.length}
           completed={completed.length}
@@ -154,8 +167,8 @@ export default function TodoList() {
         {totalPages > 1 && (
           <Pagination
             page={page}
-            total={total}
-            pageSize={pageSize}
+            total={displayTotal}
+            pageSize={displayPageSize}
             onPageChange={goToPage}
           />
         )}
