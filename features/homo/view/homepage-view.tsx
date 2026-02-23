@@ -5,8 +5,8 @@ import { TodoListSkeleton } from '@/features/homo/components/TodoListSkeleton';
 
 function HomePage() {
   return (
-    <div>
-      <Wrapper className="mx-auto max-w-2xl">
+    <div className="w-full">
+      <Wrapper className="mx-auto w-full max-w-4xl">
         <Suspense fallback={<TodoListSkeleton />}>
           <TodoList />
         </Suspense>

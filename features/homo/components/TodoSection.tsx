@@ -29,8 +29,8 @@ export function TodoSection({
   isCompleted = false,
 }: TodoSectionProps) {
   return (
-    <section className="space-y-4">
-      <ul className={`space-y-4 ${isCompleted ? 'opacity-70' : ''}`}>
+    <section className="w-full space-y-4">
+      <ul className={`w-full space-y-4 ${isCompleted ? 'opacity-70' : ''}`}>
         {todos.map((todo) => (
           <TodoCard
             key={todo._id}
