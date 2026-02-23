@@ -39,10 +39,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider>
+
             <NuqsAdapter>
               <Suspense>{children}</Suspense>
               <Toaster richColors position="bottom-right" />
             </NuqsAdapter>
+            
           </ConvexClientProvider>
         </ThemeProvider>
       </body>
