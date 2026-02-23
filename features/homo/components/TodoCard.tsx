@@ -1,10 +1,10 @@
 'use client';
 
-import { Id } from '@/convex/_generated/dataModel';
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Id } from '@/convex/_generated/dataModel';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import {
   CalendarDays,
   CheckCircle2,
@@ -78,7 +78,6 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
               <Circle className="h-6 w-6" />
             )}
           </button>
-
           <CardHeader className="flex-1 min-w-0 gap-2 p-0">
             <CardTitle
               className={cn(
@@ -127,7 +126,6 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
             </CardAction>
           </CardHeader>
         </div>
-
         <CardContent className="flex flex-wrap items-center gap-3 px-0 pt-0">
           <span
             className={cn(
@@ -158,7 +156,6 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
           )}
         </CardContent>
       </Card>
-
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
