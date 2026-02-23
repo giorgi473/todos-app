@@ -156,6 +156,9 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* dailog component */}
+      
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
