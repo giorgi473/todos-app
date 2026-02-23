@@ -14,7 +14,7 @@ export default function TodosLayout({
 }>) {
   return (
     <div className="min-h-screen">
-      <Wrapper className="mx-auto flex w-full max-w-4xl flex-col items-stretch justify-start px-4 md:px-6">
+      <Wrapper className="mx-auto flex w-full max-w-4xl flex-col items-center justify-center px-4 md:px-6">
         {children}
       </Wrapper>
     </div>
