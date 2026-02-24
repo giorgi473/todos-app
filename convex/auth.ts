@@ -50,12 +50,12 @@ export const signIn = mutation({
       .first();
 
     if (!user) {
-      throw new Error('Invalid email or password');
+      return { success: false, error: 'Invalid email or password' };
     }
 
     // Verify password
     if (user.password !== args.hashedPassword) {
-      throw new Error('Invalid email or password');
+      return { success: false, error: 'Invalid email or password' };
     }
 
     return {
