@@ -61,12 +61,17 @@ export default function LoginForm() {
         hashedPassword,
         token,
       });
-      if (result.userId) {
-        localStorage.setItem('userId', result.userId);
-        localStorage.setItem('userEmail', result.email);
-        localStorage.setItem('userName', result.name || '');
-        localStorage.setItem('token', result.token);
+
+      if (!result.success) {
+        toast.error(result.error ?? 'Invalid email or password');
+        return;
       }
+
+      const { userId, email, name, token: authToken } = result;
+      localStorage.setItem('userId', String(userId));
+      localStorage.setItem('userEmail', email ?? '');
+      localStorage.setItem('userName', name ?? '');
+      localStorage.setItem('token', authToken ?? '');
 
       toast.success('Welcome back!');
       router.push('/');
@@ -132,14 +137,39 @@ export default function LoginForm() {
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-13 mt-4 bg-[#FF9D4D] cursor-pointer text-white rounded-sm hover:bg-[#FF8D3D] transition-all duration-200 font-semibold text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? 'Signing In...' : 'Sign In'}
-              </Button>
+              <div className="text-gray-200 flex justify-end">
+                  <Link
+                    href="/reset-password"
+                    className="cursor-pointer text-[15px] text-zinc-900 dark:text-[#FF9D4D] transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                {/* Submit Button */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-7 items-center">
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-13 mt-4 bg-[#FF9D4D] text-white rounded-sm hover:bg-[#FF8D3D] transition-all duration-200 font-semibold text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isLoading ? 'Signing In...' : 'Sign In'}
+                  </Button>
+                  <Link
+                    // href={nextParam ? `/register?next=${encodeURIComponent(nextParam)}` : "/register"}
+                    href="/sign-up"
+                    className="text-[#FF9D4D] hover:text-[#FF8D3D] transition-colors duration-200 font-medium"
+                    // onClick={() => onClose?.()}
+                  >
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-full h-13.5 mt-4 bg-gray-900 text-white rounded-sm hover:bg-gray-900 transition-all duration-200 font-semibold text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      Sign up
+                    </Button>
+                  </Link>
+                </div>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
