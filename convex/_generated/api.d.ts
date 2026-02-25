@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as sendEmailAction from "../sendEmailAction.js";
 import type * as todos from "../todos.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  sendEmailAction: typeof sendEmailAction;
   todos: typeof todos;
 }>;
 
