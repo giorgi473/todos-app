@@ -1,0 +1,212 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useAction, useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { toast } from 'sonner';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { resetPasswordSchema } from '../schemas/auth-schemas';
+
+interface ResetPasswordFormProps {
+  token: string;
+}
+
+type ResetFormValues = z.infer<typeof resetPasswordSchema>;
+
+export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const resetMutation = useMutation(api.auth.resetPassword);
+  const hashPasswordAction = useAction(api.auth.hashPasswordAction);
+  // perform the query immediately with the token
+  const verifyResult = useQuery(api.auth.verifyResetToken, { token });
+
+  const form = useForm<ResetFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const [tokenValid, setTokenValid] = useState<null | boolean>(null);
+
+  // update token validity when the query completes
+  useEffect(() => {
+    if (verifyResult === undefined) return;
+    setTokenValid(verifyResult.valid);
+    if (!verifyResult.valid) {
+      toast.error('This reset link is invalid or has expired.');
+    }
+  }, [verifyResult]);
+
+  async function onSubmit(values: ResetFormValues) {
+    try {
+      setIsLoading(true);
+      const hashedPassword = await hashPasswordAction({
+        password: values.password,
+      });
+      const result = await resetMutation({
+        token,
+        hashedPassword,
+      });
+      if (!result.success) {
+        toast.error(result.error || 'Unable to reset password');
+        return;
+      }
+      toast.success('Password successfully reset. Please sign in.');
+      router.push('/sign-in');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Reset failed';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const toggleVisibility = () => setShowPassword((prev) => !prev);
+
+  if (tokenValid === false) {
+    return (
+      <div className="w-full mx-auto md:max-w-xl min-h-screen flex items-center justify-center">
+        <Card className="bg-transparent rounded-none border-none shadow-none w-full">
+          <CardHeader className="space-y-1 text-center">
+            <CardTitle className="text-2xl font-bold text-red-400">
+              Invalid link
+            </CardTitle>
+            <CardDescription>
+              The reset link is no longer valid. Please request a new one.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                window.location.href = '/reset-password';
+              }}
+            >
+              Send a fresh link
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full mx-auto md:max-w-xl min-h-screen flex items-center justify-center">
+      <Card className="bg-transparent rounded-none border-none shadow-none w-full">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+          <CardDescription>Choose a new secure password.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Enter new password"
+                          disabled={isLoading}
+                          className="h-13 w-full bg-[#101828] border-2 rounded-sm text-xs text-neutral-100 placeholder:text-neutral-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          {...field}
+                          style={{
+                            boxShadow: 'inset 0 0 0 1000px #101828',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={toggleVisibility}
+                          className="absolute right-4 top-1/2 cursor-pointer -translate-y-1/2 text-neutral-400 hover:text-neutral-100"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Repeat new password"
+                        disabled={isLoading}
+                        className="h-13 w-full bg-[#101828] border-2 rounded-sm text-xs text-neutral-100 placeholder:text-neutral-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        {...field}
+                        style={{
+                          boxShadow: 'inset 0 0 0 1000px #101828',
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 items-center">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => router.push('/sign-in')}
+                  className="w-full h-13.5 mt-4 bg-gray-900 cursor-pointer text-white rounded-sm hover:bg-gray-900 transition-all duration-200 font-semibold text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-13 mt-4 bg-[#FF9D4D] cursor-pointer text-white rounded-sm hover:bg-[#FF8D3D] transition-all duration-200 font-semibold text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {isLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {isLoading ? 'Resetting...' : 'Reset Password'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

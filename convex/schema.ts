@@ -7,7 +7,12 @@ export default defineSchema({
     password: v.string(),
     name: v.optional(v.string()),
     createdAt: v.number(),
-  }).index('by_email', ['email']),
+    // optional fields for password reset flow
+    resetToken: v.optional(v.string()),
+    resetTokenExpiry: v.optional(v.number()),
+  })
+    .index('by_email', ['email'])
+    .index('by_resetToken', ['resetToken']),
   todos: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
