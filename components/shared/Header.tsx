@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { UnderlinedFieldWrapper } from '@/components/shared/UnderlinedFieldWrapper';
 import { UserMenuButton } from '@/components/shared/UserMenuButton';
+import AskAi from '@/components/shared/AskAi';
 
 const searchSchema = z.object({
   search: z.string(),
@@ -26,6 +27,7 @@ export default function Header() {
   const [q] = useQueryState('search');
 
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isAskAiOpen, setIsAskAiOpen] = useState(false);
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<SearchFormValues>({
@@ -57,7 +59,7 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-20 border-b-2 bg-white dark:bg-black py-2">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 md:gap-4 px-4 py-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-1 md:gap-4 px-4 py-4">
           <h1 className="text-lg font-bold tracking-tight shrink-0">
             My Todos
           </h1>
@@ -76,7 +78,7 @@ export default function Header() {
           {/* DESKTOP SEARCH */}
           <Form {...form}>
             <form
-              className="hidden md:flex flex-1"
+              className="hidden md:flex flex-1 px-10"
               onSubmit={form.handleSubmit(handleSearchSubmit)}
             >
               <FormField
@@ -114,7 +116,10 @@ export default function Header() {
             </form>
           </Form>
 
-          <div className="flex gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <div>
+              <AskAi isOpen={isAskAiOpen} onOpenChange={setIsAskAiOpen} />
+            </div>
             <ModeToggle />
             <Button
               variant={'orange'}
