@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +26,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { signInSchema } from '../schemas/auth-schemas';
 
@@ -35,6 +37,7 @@ export default function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const signInMutation = useMutation(api.auth.signIn);
   const hashPasswordAction = useAction(api.auth.hashPasswordAction);
   const generateTokenAction = useAction(api.auth.generateTokenAction);
@@ -46,6 +49,32 @@ export default function LoginForm() {
       password: '',
     },
   });
+
+  useEffect(() => {
+    const remembered = localStorage.getItem('auth.rememberMe') === '1';
+    if (!remembered) return;
+
+    const email = localStorage.getItem('auth.rememberedEmail') ?? '';
+    const password = localStorage.getItem('auth.rememberedPassword') ?? '';
+
+    setRememberMe(true);
+    form.reset({ email, password });
+  }, [form]);
+
+  useEffect(() => {
+    if (!rememberMe) return;
+
+    const subscription = form.watch((values, { name }) => {
+      if (name === 'email') {
+        localStorage.setItem('auth.rememberedEmail', values.email ?? '');
+      }
+      if (name === 'password') {
+        localStorage.setItem('auth.rememberedPassword', values.password ?? '');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, rememberMe]);
 
   async function onSubmit(values: SignInFormValues) {
     try {
@@ -73,6 +102,16 @@ export default function LoginForm() {
       localStorage.setItem('userEmail', email ?? '');
       localStorage.setItem('userName', name ?? '');
       localStorage.setItem('token', authToken ?? '');
+
+      if (rememberMe) {
+        localStorage.setItem('auth.rememberMe', '1');
+        localStorage.setItem('auth.rememberedEmail', values.email);
+        localStorage.setItem('auth.rememberedPassword', values.password);
+      } else {
+        localStorage.removeItem('auth.rememberMe');
+        localStorage.removeItem('auth.rememberedEmail');
+        localStorage.removeItem('auth.rememberedPassword');
+      }
 
       toast.success('Welcome back!');
       router.push('/');
@@ -151,7 +190,45 @@ export default function LoginForm() {
                   </FormItem>
                 )}
               />
-              <div className="text-gray-200 flex justify-end">
+              <div className="text-gray-200 flex items-center justify-between">
+                <div>
+                  <FieldGroup className="flex w-35 gap-0">
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="remember-me"
+                        name="remember-me"
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => {
+                          const next = checked === true;
+                          setRememberMe(next);
+                          if (!next) {
+                            localStorage.removeItem('auth.rememberMe');
+                            localStorage.removeItem('auth.rememberedEmail');
+                            localStorage.removeItem('auth.rememberedPassword');
+                          } else {
+                            localStorage.setItem('auth.rememberMe', '1');
+                            const { email, password } = form.getValues();
+                            localStorage.setItem(
+                              'auth.rememberedEmail',
+                              email ?? '',
+                            );
+                            localStorage.setItem(
+                              'auth.rememberedPassword',
+                              password ?? '',
+                            );
+                          }
+                        }}
+                        className="cursor-pointer border-none w-5 h-5 rounded-xs bg-[#101828]! data-[state=checked]:bg-[#FF9D4D]!"
+                      />
+                      <FieldLabel
+                        htmlFor="remember-me"
+                        className="cursor-pointer text-[15px] font-normal text-zinc-900 dark:text-[#f8a866]"
+                      >
+                        Remember me
+                      </FieldLabel>
+                    </Field>
+                  </FieldGroup>
+                </div>
                 <Link
                   href="/reset-password"
                   className="cursor-pointer text-[15px] text-zinc-900 dark:text-[#FF9D4D] transition-colors"
@@ -159,7 +236,6 @@ export default function LoginForm() {
                   Forgot password?
                 </Link>
               </div>
-              {/* Submit Button */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4 items-center">
                 <Button
                   type="submit"
