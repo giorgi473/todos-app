@@ -63,6 +63,11 @@ export default function TodoList() {
     hasOptimisticUpdate.current = false;
   }, [result]);
 
+  // Smooth scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
+
   const [, startTransition] = useTransition();
 
   const handleToggle = (id: Id<'todos'>) => {
@@ -106,10 +111,11 @@ export default function TodoList() {
   };
 
   const isLoading = userId == null || (userId && result === undefined);
-  const displayTodos =
-    hasOptimisticUpdate.current
-      ? todos
-      : (result ? ((result.todos ?? []) as Todo[]) : todos);
+  const displayTodos = hasOptimisticUpdate.current
+    ? todos
+    : result
+      ? ((result.todos ?? []) as Todo[])
+      : todos;
   const displayTotal = result ? (result.total ?? 0) : total;
   const displayPageSize = result ? (result.pageSize ?? 10) : pageSize;
 
