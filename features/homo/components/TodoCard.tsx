@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Id } from '@/convex/_generated/dataModel';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -57,15 +58,38 @@ interface TodoCardProps {
 
 export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const highlight = searchParams.get('highlight');
+  const isActive = highlight === String(todo._id);
+  const itemRef = useRef<HTMLLIElement>(null);
   const p = priorityConfig[todo.priority];
   const isOverdue = useMemo(
     () => !todo.completed && todo.dueDate && todo.dueDate < Date.now(), // eslint-disable-line react-hooks/purity
     [todo.completed, todo.dueDate],
   );
 
+  useEffect(() => {
+    if (!isActive) return;
+    const id = window.setTimeout(() => {
+      itemRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [isActive]);
+
   return (
-    <li className="w-full list-none">
-      <Card className="group flex w-full flex-col gap-4 border-zinc-200 bg-zinc-200 rounded-md px-4 py-5 shadow-md shadow-zinc-300/60 ring-1 ring-zinc-200/80 dark:border-border dark:bg-card dark:shadow-sm dark:shadow-transparent dark:ring-0 md:px-6 select-none">
+    <li
+      ref={itemRef}
+      id={`todo-${todo._id}`}
+      className="w-full list-none scroll-mt-28"
+      data-active={isActive ? 'true' : 'false'}
+    >
+      <Card
+        className={cn(
+          'group flex w-full flex-col gap-4 border-zinc-200 bg-zinc-200 rounded-md px-4 py-5 shadow-md shadow-zinc-300/60 ring-1 ring-zinc-200/80 dark:border-border dark:bg-card dark:shadow-sm dark:shadow-transparent dark:ring-0 md:px-6 select-none transition-shadow',
+          isActive &&
+            'ring-2 ring-[#FF9D4D] shadow-lg shadow-[#FF9D4D]/15 dark:ring-[#FF9D4D]',
+        )}
+      >
         <div className="flex flex-row items-start gap-4">
           <button
             onClick={() => onToggle(todo._id)}
@@ -156,9 +180,6 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
           )}
         </CardContent>
       </Card>
-
-      {/* dailog component */}
-      
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

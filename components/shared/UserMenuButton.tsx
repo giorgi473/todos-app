@@ -15,7 +15,6 @@ import { useEffect, useState } from 'react';
 
 export function UserMenuButton() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -24,7 +23,6 @@ export function UserMenuButton() {
     setUserName(localStorage.getItem('userName'));
     setUserId(localStorage.getItem('userId'));
     setUserEmail(localStorage.getItem('userEmail'));
-    setMounted(true);
   }, []);
 
   const handleLogout = () => {
@@ -36,9 +34,9 @@ export function UserMenuButton() {
     router.push('/sign-in');
   };
 
-  if (!mounted || !userId || !userName) {
-    return null;
-  }
+  const handleProfile = () => {
+    router.push('/todos/profile');
+  };
 
   return (
     <DropdownMenu modal={false}>
@@ -51,18 +49,34 @@ export function UserMenuButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 rounded-xs">
-        <div className="px-2 py-1.5">
-          <p className="text-sm font-medium leading-none">{userName}</p>
-          <p className="text-xs text-muted-foreground">{userEmail}</p>
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={handleLogout}
-          className="cursor-pointer text-red-600 dark:text-red-400 rounded-xs focus:bg-red-50 dark:focus:bg-red-950"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Log Out
-        </DropdownMenuItem>
+        {userId && userName ? (
+          <>
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium leading-none">{userName}</p>
+              <p className="text-xs text-muted-foreground">{userEmail}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleProfile}
+              className="cursor-pointer text-zinc-900 dark:text-zinc-200 rounded-xs"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="cursor-pointer text-[#ff9D4D] rounded-xs"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Log Out
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <div className="px-2 py-1.5">
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
