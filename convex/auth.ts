@@ -86,6 +86,85 @@ export const getCurrentUser = query({
   },
 });
 
+export const getUserProfile = query({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // In a real app, you'd validate that userId is a valid ID string
+    try {
+      const userId = args.userId as any;
+      const user = await ctx.db.get(userId);
+      if (!user || !('email' in user)) {
+        return null;
+      }
+      const userDoc = user as any;
+      return {
+        _id: userDoc._id,
+        email: userDoc.email,
+        name: userDoc.name || '',
+        profileImage: userDoc.profileImage || null,
+        createdAt: userDoc.createdAt,
+      };
+    } catch (error) {
+      return null;
+    }
+  },
+});
+
+export const updateUserProfile = mutation({
+  args: {
+    userId: v.string(),
+    name: v.optional(v.string()),
+    profileImage: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = args.userId as any;
+    const user = await ctx.db.get(userId);
+
+    if (!user || !('email' in user)) {
+      throw new Error('User not found');
+    }
+
+    const updates: any = {};
+
+    if (args.name !== undefined) {
+      updates.name = args.name;
+    }
+
+    if (args.profileImage !== undefined) {
+      updates.profileImage = args.profileImage;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      const userDoc = user as any;
+      return {
+        _id: userDoc._id,
+        email: userDoc.email,
+        name: userDoc.name || '',
+        profileImage: userDoc.profileImage || null,
+        createdAt: userDoc.createdAt,
+      };
+    }
+
+    await ctx.db.patch(userId, updates);
+
+    const updatedUser = await ctx.db.get(userId);
+    if (!updatedUser || !('email' in updatedUser)) {
+      throw new Error('Failed to retrieve updated user');
+    }
+
+    const userDoc = updatedUser as any;
+    return {
+      _id: userDoc._id,
+      email: userDoc.email,
+      name: userDoc.name || '',
+      profileImage: userDoc.profileImage || null,
+      createdAt: userDoc.createdAt,
+    };
+  },
+});
+
 // Helper function to hash password using Web Crypto API
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -121,7 +200,6 @@ export const generateTokenAction = action({
     return generateToken();
   },
 });
-// |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 /**
  * Request a password reset. Always returns success=true so callers can't
  * enumerate which emails are registered. When a user exists we generate a
