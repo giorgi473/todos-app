@@ -6,6 +6,7 @@ export default defineSchema({
     email: v.string(),
     password: v.string(),
     name: v.optional(v.string()),
+    profileImage: v.optional(v.string()), // Base64 string or image URL
     createdAt: v.number(),
     // optional fields for password reset flow
     resetToken: v.optional(v.string()),
