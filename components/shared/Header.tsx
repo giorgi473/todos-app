@@ -34,6 +34,7 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchSchema),
@@ -65,7 +66,6 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
     <>
       <header className="sticky top-0 z-30 border-b-2 bg-white dark:bg-black py-2">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-1 md:gap-4 px-4 py-4">
-          {/* LOGO MOBILE */}
           <Link
             href="/todos"
             className="flex items-center gap-2 shrink-0 md:hidden"
@@ -74,8 +74,6 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
               My Todos
             </h1>
           </Link>
-
-          {/* LOGO DESKTOP */}
           <Link
             href="/todos"
             className="hidden items-center gap-2 shrink-0 md:flex"
@@ -84,8 +82,6 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
               My Todos
             </h1>
           </Link>
-
-          {/* MOBILE RIGHT SIDE - ASK AI, USER, HAMBURGER */}
           <div className="flex md:hidden items-center gap-1">
             <div className="flex items-center justify-center">
               <AskAi
@@ -97,14 +93,12 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
             <UserMenuButton />
             <button
               type="button"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               className="flex items-center justify-center rounded-xs p-2.5 hover:bg-neutral-100 dark:bg-neutral-950"
             >
               <Menu className="h-4 w-4" />
             </button>
           </div>
-
-          {/* DESKTOP SEARCH */}
           <Form {...form}>
             <form
               className="hidden md:flex flex-1 px-10"
@@ -144,7 +138,6 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
               />
             </form>
           </Form>
-
           <div className="hidden md:flex items-center gap-2 shrink-0">
             <div>
               <AskAi
@@ -166,18 +159,19 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
           </div>
         </div>
       </header>
-
-      {/* MOBILE MENU OVERLAY */}
       <div
         className={`
-          fixed inset-x-0 top-20 z-20 md:hidden 
+          fixed inset-x-0 top-20 z-20 md:hidden
           transform transition-all duration-300
           ${isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'}
         `}
       >
-        <div className="bg-white dark:bg-black border-b-2 border-neutral-200 dark:border-neutral-800">
+        <div
+          ref={mobileMenuRef}
+          className="bg-white dark:bg-black border-b-2 border-neutral-200 dark:border-neutral-800"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="mx-auto max-w-2xl px-4 py-4 space-y-4">
-            {/* Search in menu */}
             <Form {...form}>
               <form
                 onSubmit={(e) => {
@@ -196,6 +190,7 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
                         <UnderlinedFieldWrapper>
                           <Input
                             {...field}
+                            ref={mobileInputRef}
                             placeholder="Search todos..."
                             autoComplete="search"
                             className="
@@ -211,22 +206,16 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
                     </FormItem>
                   )}
                 />
-
-                <button
-                  type="submit"
-                  className="flex w-8.5 h-8.5 items-center justify-center rounded-xs bg-zinc-800 text-white"
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xs border-none cursor-pointer"
                 >
                   <Search className="h-4 w-4" />
-                </button>
+                </Button>
               </form>
             </Form>
-
-            {/* Divider */}
             <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
-
-            {/* Menu items */}
             <div className="space-y-2">
-              {/* New Todo */}
               <Button
                 variant={'orange'}
                 onClick={() => {
@@ -238,12 +227,7 @@ export default function Header({ isAskAiOpen, setIsAskAiOpen }: HeaderProps) {
                 <Plus className="h-5 w-5" />
                 New Todo
               </Button>
-
-              {/* Mode Toggle */}
-              <div
-                className="flex items-center justify-between py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
+              <div className="flex items-center justify-between py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
                 <span className="text-sm font-medium">Theme</span>
                 <ModeToggle />
               </div>
