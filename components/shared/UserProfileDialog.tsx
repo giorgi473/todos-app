@@ -235,7 +235,7 @@ export function UserProfileDialog({
                   src={imagePreview}
                   alt={tempName || 'Avatar'}
                   fill
-                  className="rounded-full object-cover border-2 border-primary/20"
+                  className="rounded-full object-cover ring-2 ring-[#ff9D4D]"
                   priority
                 />
               ) : (
