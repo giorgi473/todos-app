@@ -34,6 +34,7 @@ export function UserProfileDialog({
 }: UserProfileDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [tempName, setTempName] = useState(userName || '');
   const [tempImage, setTempImage] = useState(profileImage);
   const [imagePreview, setImagePreview] = useState(profileImage);
@@ -50,12 +51,12 @@ export function UserProfileDialog({
     }
   }, [open, userName, profileImage]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 500 * 1024) {
-      toast.error('Image size must be less than 500KB');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
       return;
     }
 
@@ -64,21 +65,25 @@ export function UserProfileDialog({
       return;
     }
 
+    // Show preview while uploading
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const img = new window.Image();
-      img.onload = () => {
+      img.onload = async () => {
+        // Compress image before uploading
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
 
-        if (width > 800 || height > 800) {
+        // Max dimensions: 1200x1200 to preserve quality but reduce file size
+        const maxSize = 1200;
+        if (width > maxSize || height > maxSize) {
           if (width > height) {
-            height = (height * 800) / width;
-            width = 800;
+            height = (height * maxSize) / width;
+            width = maxSize;
           } else {
-            width = (width * 800) / height;
-            height = 800;
+            width = (width * maxSize) / height;
+            height = maxSize;
           }
         }
 
@@ -87,9 +92,82 @@ export function UserProfileDialog({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const base64String = canvas.toDataURL('image/jpeg', 0.7);
-          setTempImage(base64String);
-          setImagePreview(base64String);
+
+          // Convert canvas to blob for better compression
+          canvas.toBlob(
+            async (blob) => {
+              if (!blob) {
+                toast.error('Failed to process image');
+                return;
+              }
+
+              // Create preview
+              const previewUrl = canvas.toDataURL('image/jpeg', 0.7);
+              setImagePreview(previewUrl);
+
+              // Upload compressed file
+              setIsUploadingImage(true);
+              try {
+                const formData = new FormData();
+                formData.append('file', blob, 'profile-image.jpeg');
+
+                const response = await fetch('/api/upload-profile-image', {
+                  method: 'POST',
+                  body: formData,
+                });
+
+                if (!response.ok) {
+                  const error = await response.json();
+                  toast.error(error.error || 'Failed to upload image');
+                  setImagePreview(profileImage);
+                  return;
+                }
+
+                const data = await response.json();
+                setTempImage(data.url);
+
+                // Auto-save immediately after successful upload
+                if (!userId) {
+                  toast.error('User not authenticated');
+                  return;
+                }
+
+                setIsLoading(true);
+                try {
+                  await updateUserProfile({
+                    userId,
+                    name: tempName,
+                    profileImage: data.url,
+                  });
+
+                  // Update localStorage
+                  localStorage.setItem('userName', tempName);
+                  localStorage.setItem('userProfileImage', data.url);
+
+                  // Dispatch event to update UserMenuButton
+                  window.dispatchEvent(new Event('profile-updated'));
+
+                  setIsEditing(false);
+                  toast.success('Profile image updated! 🎉');
+                } catch (error) {
+                  toast.error('Failed to save profile image');
+                } finally {
+                  setIsLoading(false);
+                }
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to upload image',
+                );
+                setImagePreview(profileImage);
+              } finally {
+                setIsUploadingImage(false);
+              }
+            },
+            'image/jpeg',
+            0.75, // 75% quality for better file size
+          );
         }
       };
       img.src = e.target?.result as string;
@@ -125,13 +203,12 @@ export function UserProfileDialog({
       // Dispatch event to update UserMenuButton
       window.dispatchEvent(new Event('profile-updated'));
 
-      setIsEditing(false);
       toast.success('Profile updated! 🎉');
     } catch (error) {
-      console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setIsLoading(false);
+      setIsEditing(false);
     }
   };
 
@@ -172,8 +249,13 @@ export function UserProfileDialog({
                   onClick={() => fileInputRef.current?.click()}
                   className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
                   title="Upload new avatar"
+                  disabled={isUploadingImage}
                 >
-                  <Camera className="w-5 h-5 text-white" />
+                  {isUploadingImage ? (
+                    <Loader className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Camera className="w-5 h-5 text-white" />
+                  )}
                 </button>
               )}
             </div>
@@ -185,6 +267,7 @@ export function UserProfileDialog({
               onChange={handleImageChange}
               className="hidden"
               aria-label="Upload profile image"
+              disabled={isUploadingImage}
             />
           </div>
 
@@ -200,7 +283,7 @@ export function UserProfileDialog({
                 value={tempName}
                 onChange={(e) => setTempName(e.target.value)}
                 placeholder="Enter your name"
-                className="bg-secondary/50 border-border/50"
+                className="bg-secondary border-border rounded-xs focus:border-none"
               />
             </div>
           )}
@@ -211,18 +294,19 @@ export function UserProfileDialog({
               <>
                 <Button
                   onClick={handleCancel}
-                  variant="outline"
+                  variant="orange"
                   size="sm"
-                  className="flex-1 gap-2"
+                  className="gap-1.5 flex-1 cursor-pointer py-5 rounded-none hover:bg-amber-500 transition-all duration-300 ease-in-out"
                   disabled={isLoading}
                 >
                   <X className="w-4 h-4" />
                   Cancel
                 </Button>
                 <Button
+                  variant={'orange'}
                   onClick={handleSave}
                   size="sm"
-                  className="flex-1 gap-2"
+                  className="gap-1.5 flex-1 cursor-pointer py-5 rounded-none hover:bg-amber-500 transition-all duration-300 ease-in-out"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -240,9 +324,10 @@ export function UserProfileDialog({
               </>
             ) : (
               <Button
+                variant={'orange'}
                 onClick={() => setIsEditing(true)}
                 size="sm"
-                className="w-full"
+                className="gap-1.5 w-full cursor-pointer py-5 rounded-none hover:bg-amber-500 transition-all duration-300 ease-in-out"
               >
                 Edit Profile
               </Button>

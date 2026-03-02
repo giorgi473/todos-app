@@ -152,7 +152,7 @@ If something is impossible with the current todos, explain what is missing.
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
-      console.error('OpenAI API error:', errorText);
+
       return NextResponse.json(
         { error: 'Upstream AI provider returned an error.' },
         { status: 502 },
@@ -166,7 +166,6 @@ If something is impossible with the current todos, explain what is missing.
 
     return NextResponse.json({ reply });
   } catch (error) {
-    console.error('Ask AI route error:', error);
     return NextResponse.json(
       { error: 'Unexpected error while handling Ask AI request.' },
       { status: 500 },
