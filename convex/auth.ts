@@ -2,6 +2,59 @@ import { mutation, query, action } from './_generated/server';
 import { api } from './_generated/api';
 import { v } from 'convex/values';
 
+// Helper function to extract device name from user agent
+function parseDeviceName(userAgent: string): string {
+  if (!userAgent) return 'Unknown Device';
+
+  // Windows
+  if (userAgent.includes('Windows')) {
+    if (userAgent.includes('Edge')) return 'Edge on Windows';
+    if (userAgent.includes('Chrome')) return 'Chrome on Windows';
+    if (userAgent.includes('Firefox')) return 'Firefox on Windows';
+    if (userAgent.includes('Safari')) return 'Safari on Windows';
+    return 'Windows Device';
+  }
+
+  // macOS
+  if (userAgent.includes('Macintosh') || userAgent.includes('Mac OS X')) {
+    if (userAgent.includes('Safari') && !userAgent.includes('Chrome'))
+      return 'Safari on Mac';
+    if (userAgent.includes('Chrome')) return 'Chrome on Mac';
+    if (userAgent.includes('Firefox')) return 'Firefox on Mac';
+    return 'Mac Device';
+  }
+
+  // iPhone
+  if (userAgent.includes('iPhone')) {
+    if (userAgent.includes('Safari')) return 'Safari on iPhone';
+    if (userAgent.includes('Chrome')) return 'Chrome on iPhone';
+    return 'iPhone';
+  }
+
+  // iPad
+  if (userAgent.includes('iPad')) {
+    if (userAgent.includes('Safari')) return 'Safari on iPad';
+    if (userAgent.includes('Chrome')) return 'Chrome on iPad';
+    return 'iPad';
+  }
+
+  // Android
+  if (userAgent.includes('Android')) {
+    if (userAgent.includes('Chrome')) return 'Chrome on Android';
+    if (userAgent.includes('Firefox')) return 'Firefox on Android';
+    return 'Android Device';
+  }
+
+  // Linux
+  if (userAgent.includes('Linux')) {
+    if (userAgent.includes('Chrome')) return 'Chrome on Linux';
+    if (userAgent.includes('Firefox')) return 'Firefox on Linux';
+    return 'Linux Device';
+  }
+
+  return 'Unknown Device';
+}
+
 export const signUp = mutation({
   args: {
     email: v.string(),
@@ -42,6 +95,8 @@ export const signIn = mutation({
     password: v.string(),
     hashedPassword: v.string(),
     token: v.string(),
+    userAgent: v.optional(v.string()),
+    ipAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Find user by email
@@ -59,12 +114,29 @@ export const signIn = mutation({
       return { success: false, error: 'Invalid email or password' };
     }
 
+    // Create session
+    const deviceName = parseDeviceName(args.userAgent || '');
+    const now = Date.now();
+
+    const sessionId = await ctx.db.insert('sessions', {
+      userId: user._id,
+      token: args.token,
+      deviceName,
+      userAgent: args.userAgent || '',
+      ipAddress: args.ipAddress,
+      createdAt: now,
+      lastActivityAt: now,
+      isCurrentSession: true,
+    });
+
     return {
       success: true,
       userId: user._id,
       email: user.email,
       name: user.name,
       token: args.token,
+      sessionId,
+      deviceName,
     };
   },
 });
@@ -200,6 +272,143 @@ export const generateTokenAction = action({
     return generateToken();
   },
 });
+
+// Create a session for a user (called after successful sign in)
+export const createSession = mutation({
+  args: {
+    userId: v.id('users'),
+    token: v.string(),
+    userAgent: v.string(),
+    ipAddress: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const deviceName = parseDeviceName(args.userAgent);
+    const now = Date.now();
+
+    const sessionId = await ctx.db.insert('sessions', {
+      userId: args.userId,
+      token: args.token,
+      deviceName,
+      userAgent: args.userAgent,
+      ipAddress: args.ipAddress,
+      createdAt: now,
+      lastActivityAt: now,
+      isCurrentSession: true,
+    });
+
+    return {
+      sessionId,
+      deviceName,
+    };
+  },
+});
+
+// Get all active sessions for a user
+export const getUserSessions = query({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const sessions = await ctx.db
+      .query('sessions')
+      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    return sessions
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((session) => ({
+        _id: session._id,
+        deviceName: session.deviceName,
+        createdAt: session.createdAt,
+        lastActivityAt: session.lastActivityAt,
+        ipAddress: session.ipAddress || 'Unknown',
+        isCurrentSession: session.isCurrentSession || false,
+      }));
+  },
+});
+
+// Revoke a session
+export const revokeSession = mutation({
+  args: {
+    sessionId: v.id('sessions'),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.sessionId);
+    return { success: true };
+  },
+});
+
+// Revoke all other sessions for a user
+export const revokeAllOtherSessions = mutation({
+  args: {
+    userId: v.id('users'),
+    currentToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const sessions = await ctx.db
+      .query('sessions')
+      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+      .collect();
+
+    const sessionsToDelete = sessions.filter(
+      (session) => session.token !== args.currentToken,
+    );
+
+    for (const session of sessionsToDelete) {
+      await ctx.db.delete(session._id);
+    }
+
+    return { success: true, revokedCount: sessionsToDelete.length };
+  },
+});
+
+// Validate a session token (read-only)
+export const validateSession = query({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query('sessions')
+      .withIndex('by_token', (q) => q.eq('token', args.token))
+      .first();
+
+    if (!session) {
+      return { valid: false };
+    }
+
+    return {
+      valid: true,
+      userId: session.userId,
+      deviceName: session.deviceName,
+      createdAt: session.createdAt,
+    };
+  },
+});
+
+// Update last activity for a session
+export const updateSessionActivity = mutation({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query('sessions')
+      .withIndex('by_token', (q) => q.eq('token', args.token))
+      .first();
+
+    if (!session) {
+      return { success: false };
+    }
+
+    await ctx.db.patch(session._id, {
+      lastActivityAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
 /**
  * Request a password reset. Always returns success=true so callers can't
  * enumerate which emails are registered. When a user exists we generate a

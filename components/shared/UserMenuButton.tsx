@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, UserPen } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { UserProfileDialog } from './UserProfileDialog';
 import {
@@ -39,6 +39,10 @@ export function UserMenuButton() {
     localStorage.removeItem('token');
     toast.success('Logged out successfully');
     router.push('/sign-in');
+  };
+
+  const handleSettingsClick = () => {
+    router.push('/settings');
   };
 
   return (
@@ -87,11 +91,18 @@ export function UserMenuButton() {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => setIsProfileDialogOpen(true)}
+                onClick={handleSettingsClick}
                 className="cursor-pointer text-zinc-900 dark:text-zinc-200 rounded-xs gap-2"
               >
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsProfileDialogOpen(true)}
+                className="cursor-pointer text-zinc-900 dark:text-zinc-200 rounded-xs gap-2"
+              >
+                <UserPen className="h-4 w-4" />
+                <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

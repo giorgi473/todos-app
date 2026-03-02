@@ -85,11 +85,16 @@ export default function LoginForm() {
       });
       const token = await generateTokenAction();
 
+      // Get device info
+      const userAgent =
+        typeof navigator !== 'undefined' ? navigator.userAgent : '';
+
       const result = await signInMutation({
         email: values.email,
         password: values.password,
         hashedPassword,
         token,
+        userAgent,
       });
 
       if (!result.success) {
