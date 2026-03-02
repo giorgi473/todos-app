@@ -14,6 +14,19 @@ export default defineSchema({
   })
     .index('by_email', ['email'])
     .index('by_resetToken', ['resetToken']),
+  sessions: defineTable({
+    userId: v.id('users'),
+    token: v.string(),
+    deviceName: v.string(),
+    userAgent: v.string(),
+    ipAddress: v.optional(v.string()),
+    createdAt: v.number(),
+    lastActivityAt: v.number(),
+    isCurrentSession: v.optional(v.boolean()),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_token', ['token'])
+    .index('by_createdAt', ['createdAt']),
   todos: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
