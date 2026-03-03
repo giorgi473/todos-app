@@ -60,7 +60,7 @@ export default function SettingsList() {
     <div className="w-full">
       <Wrapper className="mx-auto w-full py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Settings & Security</h1>
+          <h1 className="md:text-2xl font-bold mb-2">Settings & Security</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Manage your account and security preferences
           </p>
@@ -68,7 +68,7 @@ export default function SettingsList() {
 
         <div className="grid gap-8">
           {/* Profile Card */}
-          <Card>
+          <Card className="rounded-sm">
             <CardHeader>
               <CardTitle>Account Information</CardTitle>
               <CardDescription>Your account details</CardDescription>
@@ -93,7 +93,7 @@ export default function SettingsList() {
           <SessionManager userId={userId} />
 
           {/* Sign Out */}
-          <Card className="border-red-200">
+          <Card className="rounded-sm">
             <CardHeader>
               <CardTitle className="text-red-600">Danger Zone</CardTitle>
               <CardDescription>

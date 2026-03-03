@@ -33,7 +33,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
               onClick={onClearMessages}
               variant="ghost"
               size="icon"
-              className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-neutral-900"
+              className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-neutral-900 cursor-pointer"
             >
               <Trash className="w-4 sm:w-5 h-4 sm:h-5" />
             </Button>
@@ -43,7 +43,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
               onClick={onClose}
               variant="ghost"
               size="icon"
-              className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-neutral-900"
+              className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-neutral-900 cursor-pointer"
             >
               <X className="w-4 sm:w-5 h-4 sm:h-5" />
             </Button>

@@ -14,9 +14,7 @@ export const transliterateToEnglish = (text: string): string => {
       transliterationMap[char] !== undefined ? transliterationMap[char] : char,
     )
     .join('')
-    .replace(/[^\x00-\x7F]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/[^\x00-\x7F\s]/g, '');
 };
 
 /**

@@ -27,12 +27,11 @@ export const AskAiCard: React.FC<AskAiCardProps> = ({
           exit={{ opacity: 0, y: 100 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
-          <Card className="bg-neutral-950 gap-0 p-0 mx-2 md:px-0 border border-gray-200 dark:border-neutral-800 rounded-sm h-87.5 sm:h-100 md:h-112.5 flex flex-col overflow-hidden transition-all duration-200">
+          <Card className="bg-zinc-200 dark:bg-zinc-950 gap-0 p-0 mx-2 md:px-0 border border-gray-200 dark:border-neutral-800 rounded-sm h-87.5 sm:h-100 md:h-112.5 flex flex-col overflow-hidden transition-all duration-200">
             <CardHeader
               onClearMessages={onClearMessages}
               onClose={() => onOpenChange(false)}
               label={label}
-              
             />
 
             <style jsx global>{`
@@ -49,6 +48,16 @@ export const AskAiCard: React.FC<AskAiCardProps> = ({
               }
               .ask-ai-textarea {
                 scrollbar-width: none;
+                outline: none !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-bottom: 2px solid #ff9d4d !important;
+              }
+              .ask-ai-textarea:focus {
+                border: none !important;
+                border-bottom: 2px solid #ff9d4d !important;
+                outline: none !important;
+                box-shadow: none !important;
               }
               .ask-ai-textarea::-webkit-scrollbar {
                 width: 0;
