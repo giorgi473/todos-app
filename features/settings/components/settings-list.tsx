@@ -104,7 +104,7 @@ export default function SettingsList() {
               <Button
                 variant="destructive"
                 onClick={handleSignOut}
-                className="w-full"
+                className="w-full cursor-pointer"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out from Current Device

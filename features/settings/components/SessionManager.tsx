@@ -80,8 +80,6 @@ export function SessionManager({ userId }: SessionManagerProps) {
     return <Laptop className="w-5 h-5" />;
   };
 
-  const isLoading = sessions === undefined;
-
   return (
     <div className="space-y-4">
       <Card>
@@ -92,11 +90,7 @@ export function SessionManager({ userId }: SessionManagerProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? (
-            <div className="text-center py-8 text-gray-500">
-              Loading sessions...
-            </div>
-          ) : sessions && sessions.length === 0 ? (
+          {sessions && sessions.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No active sessions
             </div>
@@ -144,10 +138,10 @@ export function SessionManager({ userId }: SessionManagerProps) {
                     </div>
                     {!session.isCurrentSession && (
                       <Button
-                        variant="ghost"
+                        variant="orange"
                         size="sm"
                         onClick={() => setRevokeSessionId(session._id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="gap-1.5 cursor-pointer rounded-none hover:bg-amber-500 transition-all duration-300 ease-in-out"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -159,8 +153,8 @@ export function SessionManager({ userId }: SessionManagerProps) {
               {sessions && sessions.length > 1 && (
                 <div className="pt-4 border-t">
                   <Button
-                    variant="outline"
-                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
+                    variant="orange"
+                    className="gap-1.5 cursor-pointer rounded-sm w-full hover:bg-amber-500 transition-all duration-300 ease-in-out"
                     onClick={() => setShowRevokeAll(true)}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
@@ -186,11 +180,16 @@ export function SessionManager({ userId }: SessionManagerProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRevokeSessionId(null)}>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setRevokeSessionId(null)}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
+              className="cursor-pointer"
               onClick={() =>
                 revokeSessionId && handleRevokeSession(revokeSessionId)
               }
@@ -212,10 +211,18 @@ export function SessionManager({ userId }: SessionManagerProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRevokeAll(false)}>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setShowRevokeAll(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleRevokeAllOthers}>
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={handleRevokeAllOthers}
+            >
               Sign Out All Others
             </Button>
           </DialogFooter>

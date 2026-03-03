@@ -5,7 +5,7 @@ import SettingsList from '@/features/settings/components/settings-list';
 
 function SettingsPageView() {
   return (
-    <section className="w-full">
+    <section className="w-full min-h-screen">
       <Wrapper className="mx-auto w-full max-w-4xl px-4 md:px-6">
         <Suspense fallback={<Loading />}>
           <SettingsList />
