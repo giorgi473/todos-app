@@ -57,7 +57,7 @@ export default function EditTodoPage({ params }: { params: ParamsPromise }) {
   return (
     <>
       <header className="bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex items-center gap-3 px-3 py-4 select-none">
+        <div className="mx-auto flex items-center gap-3 py-4 select-none">
           <button
             onClick={() => router.push('/todos')}
             aria-label="Back"
