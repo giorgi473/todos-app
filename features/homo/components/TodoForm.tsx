@@ -101,7 +101,6 @@ export default function TodoForm({
     },
   });
 
-  // როცა initialData მოგვიანებით მოვა
   useEffect(() => {
     if (initialData) {
       form.reset({
@@ -155,8 +154,7 @@ export default function TodoForm({
   }
 
   return (
-    <div className="w-full max-w-2xl px-5 md:px-0">
-      {/* Header */}
+    <div className="w-full">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-4 w-4 text-muted-foreground" />
@@ -168,7 +166,6 @@ export default function TodoForm({
           {mode === 'create' ? 'Create a Todo' : 'Update Todo'}
         </h2>
       </div>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Title */}
