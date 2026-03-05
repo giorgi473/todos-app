@@ -151,7 +151,7 @@ export default function TodoForm({
           toast.error('User ID not found. Please log in again.');
           return;
         }
-        await create({
+        const result = await create({
           title: values.title,
           description: values.description || undefined,
           priority: values.priority,
@@ -159,9 +159,10 @@ export default function TodoForm({
           userId,
           imageUrl: values.imageUrl || undefined,
         });
+        console.log('Todo created successfully:', result);
         toast.success('Todo added successfully! ✓');
       } else if (mode === 'edit' && todoId) {
-        await update({
+        const result = await update({
           id: todoId,
           patch: {
             title: values.title,
@@ -171,14 +172,20 @@ export default function TodoForm({
             imageUrl: values.imageUrl || undefined,
           },
         });
+        console.log('Todo updated successfully:', result);
         toast.success('Todo updated!');
       }
 
       form.reset();
       setImagePreview(null);
       onSuccess?.();
-    } catch {
-      toast.error('Something went wrong. Please try again.');
+    } catch (error) {
+      console.error('Form submission error:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.';
+      toast.error(errorMessage);
     }
   }
 
