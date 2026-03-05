@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Id } from '@/convex/_generated/dataModel';
 import { format } from 'date-fns';
@@ -40,6 +39,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { priorityConfig } from '@/constants/priorityConfig';
+import { ImageCarousel } from '@/components/shared/ImageCarousel';
 
 interface Todo {
   _id: Id<'todos'>;
@@ -49,7 +49,8 @@ interface Todo {
   priority: 'low' | 'medium' | 'high';
   dueDate?: number;
   createdAt: number;
-  imageUrl?: string;
+  imageUrl?: string; // Legacy single image
+  imageUrls?: string[]; // New multiple images
 }
 
 interface TodoCardProps {
@@ -154,20 +155,27 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
               {todo.description}
             </CardDescription>
           )}
-          {/* Image Preview */}
-          {todo.imageUrl && (
-            <div className="mt-3 rounded-sm overflow-hidden bg-muted/40 aspect-video w-full">
-              <Image
-                src={todo.imageUrl}
-                alt={todo.title}
-                width={1200}
-                height={675}
-                className="w-full h-full object-cover"
-                priority={true}
-                quality={85}
-              />
-            </div>
-          )}
+          {/* Image Carousel - handles both new (imageUrls) and legacy (imageUrl) */}
+          {(() => {
+            // Prefer new imageUrls, fallback to legacy imageUrl
+            const images =
+              todo.imageUrls && todo.imageUrls.length > 0
+                ? todo.imageUrls
+                : todo.imageUrl
+                  ? [todo.imageUrl]
+                  : undefined;
+
+            return images ? (
+              <div className="mt-3">
+                <ImageCarousel
+                  images={images}
+                  title={todo.title}
+                  autoplay={true}
+                  autoplayDelay={6000}
+                />
+              </div>
+            ) : null;
+          })()}
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3 px-0 pt-0">
           <span

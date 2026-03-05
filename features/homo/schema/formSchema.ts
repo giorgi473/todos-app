@@ -8,5 +8,5 @@ export const formSchema = z.object({
   description: z.string().max(500, 'Maximum 500 characters').optional(),
   priority: z.enum(['low', 'medium', 'high']),
   dueDate: z.date().optional(),
-  imageUrl: z.string().optional(),
+  imageUrls: z.array(z.string()).optional(),
 });

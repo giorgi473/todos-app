@@ -29,7 +29,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Loader2, Sparkles, Upload, X } from 'lucide-react';
+import { CalendarIcon, Loader2, Sparkles, Plus, X } from 'lucide-react';
 import { formSchema } from '@/features/homo/schema/formSchema';
 import { priorityConfig } from '@/features/homo/lib/priority-config';
 
@@ -43,7 +43,8 @@ interface TodoFormProps {
     description?: string;
     priority: 'low' | 'medium' | 'high';
     dueDate?: number;
-    imageUrl?: string;
+    imageUrl?: string; // Legacy single image
+    imageUrls?: string[]; // New multiple images
   };
   onSuccess?: () => void;
 }
@@ -58,10 +59,18 @@ export default function TodoForm({
   const update = useMutation(api.todos.update);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    initialData?.imageUrl || null,
-  );
+  // Handle both legacy imageUrl and new imageUrls
+  const [imagePreviews, setImagePreviews] = useState<string[]>(() => {
+    if (initialData?.imageUrls && initialData.imageUrls.length > 0) {
+      return initialData.imageUrls;
+    }
+    if (initialData?.imageUrl) {
+      return [initialData.imageUrl];
+    }
+    return [];
+  });
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const MAX_IMAGES = 10;
 
   useEffect(() => {
     const id = localStorage.getItem('userId');
@@ -75,12 +84,20 @@ export default function TodoForm({
       description: initialData?.description ?? '',
       priority: initialData?.priority ?? 'medium',
       dueDate: initialData?.dueDate ? new Date(initialData.dueDate) : undefined,
-      imageUrl: initialData?.imageUrl ?? '',
+      imageUrls: initialData?.imageUrls ?? [],
     },
   });
 
   useEffect(() => {
     if (initialData) {
+      // Merge old and new image formats for imageUrls field
+      let images: string[] = [];
+      if (initialData.imageUrls && initialData.imageUrls.length > 0) {
+        images = initialData.imageUrls;
+      } else if (initialData.imageUrl) {
+        images = [initialData.imageUrl];
+      }
+
       form.reset({
         title: initialData.title,
         description: initialData.description ?? '',
@@ -88,21 +105,28 @@ export default function TodoForm({
         dueDate: initialData.dueDate
           ? new Date(initialData.dueDate)
           : undefined,
-        imageUrl: initialData.imageUrl ?? '',
+        imageUrls: images,
       });
-      setImagePreview(initialData.imageUrl || null);
+      setImagePreviews(images);
     }
   }, [initialData, form]);
 
   const isSubmitting = form.formState.isSubmitting;
   const selectedPriority = form.watch('priority');
   const activeConfig = priorityConfig.find((p) => p.value === selectedPriority);
+  const canAddMoreImages = imagePreviews.length < MAX_IMAGES;
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Check max images limit
+    if (imagePreviews.length >= MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images allowed`);
+      return;
+    }
 
     // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
@@ -132,9 +156,10 @@ export default function TodoForm({
       }
 
       const data = await response.json();
-      form.setValue('imageUrl', data.url);
-      setImagePreview(data.url);
-      toast.success('Image uploaded successfully!');
+      const newImageUrls = [...imagePreviews, data.url];
+      setImagePreviews(newImageUrls);
+      form.setValue('imageUrls', newImageUrls);
+      toast.success('Image added successfully! ✓');
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Failed to upload image',
@@ -142,6 +167,13 @@ export default function TodoForm({
     } finally {
       setIsUploadingImage(false);
     }
+  };
+
+  const removeImage = (index: number) => {
+    const newImageUrls = imagePreviews.filter((_, i) => i !== index);
+    setImagePreviews(newImageUrls);
+    form.setValue('imageUrls', newImageUrls);
+    toast.success('Image removed');
   };
 
   async function onSubmit(values: FormValues) {
@@ -157,7 +189,10 @@ export default function TodoForm({
           priority: values.priority,
           dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
           userId,
-          imageUrl: values.imageUrl || undefined,
+          imageUrls:
+            values.imageUrls && values.imageUrls.length > 0
+              ? values.imageUrls
+              : undefined,
         });
         toast.success('Todo added successfully! ✓');
       } else if (mode === 'edit' && todoId) {
@@ -168,14 +203,17 @@ export default function TodoForm({
             description: values.description || undefined,
             priority: values.priority,
             dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
-            imageUrl: values.imageUrl || undefined,
+            imageUrls:
+              values.imageUrls && values.imageUrls.length > 0
+                ? values.imageUrls
+                : undefined,
           },
         });
         toast.success('Todo updated!');
       }
 
       form.reset();
-      setImagePreview(null);
+      setImagePreviews([]);
       onSuccess?.();
     } catch (error) {
       const errorMessage =
@@ -246,46 +284,67 @@ export default function TodoForm({
             )}
           />
 
-          {/* Image Upload */}
+          {/* Images Upload */}
           <FormField
             control={form.control}
-            name="imageUrl"
+            name="imageUrls"
             render={() => (
               <FormItem>
-                <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  Image{' '}
-                  <span className="normal-case font-normal text-muted-foreground/70">
-                    (optional)
+                <div className="flex items-center justify-between">
+                  <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    Images{' '}
+                    <span className="normal-case font-normal text-muted-foreground/70">
+                      (optional)
+                    </span>
+                  </FormLabel>
+                  <span className="text-xs text-muted-foreground">
+                    {imagePreviews.length} / {MAX_IMAGES}
                   </span>
-                </FormLabel>
-                <div className="space-y-3">
-                  {/* Image Preview */}
-                  {imagePreview && (
-                    <div className="relative w-full rounded-sm overflow-hidden bg-muted/40 aspect-video">
-                      <Image
-                        src={imagePreview}
-                        alt="Todo preview"
-                        fill
-                        className="object-cover"
-                        quality={85}
-                        priority={false}
-                        sizes="(max-width: 640px) 100vw, 800px"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          form.setValue('imageUrl', '');
-                          setImagePreview(null);
-                        }}
-                        className="absolute top-2 right-2 p-1 bg-[#FF9D4D] hover:bg-[#FF9D4D] cursor-pointer rounded-sm text-white transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
+                </div>
 
-                  {/* Upload Input */}
-                  {!imagePreview && (
+                {/* Image Previews Grid */}
+                {imagePreviews.length > 0 && (
+                  <div className="space-y-3 mt-4">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Uploaded images ({imagePreviews.length}):
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {imagePreviews.map((preview, index) => (
+                        <div
+                          key={`preview-${index}`}
+                          className="relative group rounded-lg overflow-hidden bg-muted/40 aspect-square"
+                        >
+                          <Image
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            quality={75}
+                            sizes="(max-width: 640px) 45vw, 150px"
+                          />
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/50 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                          >
+                            <div className="p-1.5 rounded-full bg-[#FF9D4D] hover:bg-[#ff8c3a] text-white transition-colors">
+                              <X className="h-4 w-4" />
+                            </div>
+                          </button>
+                          {/* Index Badge */}
+                          <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs font-semibold">
+                            {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Area */}
+                {canAddMoreImages && (
+                  <div className="mt-4">
                     <FormControl>
                       <label className="relative block w-full">
                         <input
@@ -295,27 +354,34 @@ export default function TodoForm({
                           disabled={isUploadingImage}
                           className="hidden"
                         />
-                        <div className="flex items-center justify-center gap-3 w-full h-32 rounded-lg border-2 border-dashed border-border/50 bg-muted/40 hover:bg-muted/60 cursor-pointer transition-all hover:border-border disabled:opacity-50 disabled:cursor-not-allowed">
+                        <div className="flex flex-col items-center justify-center gap-3 w-full h-32 rounded-lg border-2 border-dashed border-border/50 bg-muted/40 hover:bg-muted/60 cursor-pointer transition-all hover:border-border disabled:opacity-50 disabled:cursor-not-allowed">
                           {isUploadingImage ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-sm text-muted-foreground font-medium">
                                 Uploading...
                               </span>
                             </>
                           ) : (
                             <>
-                              <Upload className="h-5 w-5 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">
-                                Click to upload image
-                              </span>
+                              <Plus className="h-5 w-5 text-muted-foreground" />
+                              <div className="text-center">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                  Click to add image
+                                </p>
+                                <p className="text-xs text-muted-foreground/70">
+                                  {MAX_IMAGES - imagePreviews.length} more
+                                  allowed
+                                </p>
+                              </div>
                             </>
                           )}
                         </div>
                       </label>
                     </FormControl>
-                  )}
-                </div>
+                  </div>
+                )}
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
