@@ -74,17 +74,14 @@ export async function POST(request: NextRequest) {
         },
         (error, result) => {
           if (error) {
-            console.error('Cloudinary upload error:', error);
             reject(error);
           } else {
-            console.log('Cloudinary upload success:', result?.public_id);
             resolve(result);
           }
         },
       );
 
       uploadStream.on('error', (error) => {
-        console.error('Upload stream error:', error);
         reject(error);
       });
 
@@ -102,8 +99,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred';
-
-    console.error('Upload route error:', errorMessage, error);
 
     // Return specific error messages based on the error type
     if (errorMessage.includes('Unauthorized')) {
