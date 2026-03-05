@@ -5,23 +5,27 @@ import {
   initializeCloudinary,
 } from '@/lib/cloudinary';
 
-// Validate configuration on startup
-if (!validateCloudinaryConfig()) {
-}
-
 // Initialize Cloudinary
 initializeCloudinary();
 
 export async function POST(request: NextRequest) {
   try {
     // Verify Cloudinary is configured
-    if (
-      !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
-      !process.env.CLOUDINARY_API_KEY ||
-      !process.env.CLOUDINARY_API_SECRET
-    ) {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      console.error('Missing Cloudinary credentials:', {
+        cloudName: !!cloudName,
+        apiKey: !!apiKey,
+        apiSecret: !!apiSecret,
+      });
       return NextResponse.json(
-        { error: 'Server configuration error: Missing Cloudinary credentials' },
+        {
+          error:
+            'Server configuration error: Missing Cloudinary credentials. Check Vercel environment variables.',
+        },
         { status: 500 },
       );
     }
@@ -34,9 +38,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
+    const fileSizeInMB = file.size / (1024 * 1024);
+    if (fileSizeInMB > 10) {
       return NextResponse.json(
-        { error: 'File size must be less than 10MB' },
+        {
+          error: `File size must be less than 10MB. Current: ${fileSizeInMB.toFixed(2)}MB`,
+        },
         { status: 400 },
       );
     }
@@ -44,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Check if file is an image
     if (!file.type.startsWith('image/')) {
       return NextResponse.json(
-        { error: 'File must be an image' },
+        { error: 'Please select an image file' },
         { status: 400 },
       );
     }
@@ -53,7 +60,7 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary using buffer (more reliable for serverless)
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -67,18 +74,23 @@ export async function POST(request: NextRequest) {
         },
         (error, result) => {
           if (error) {
+            console.error('Cloudinary upload error:', error);
             reject(error);
           } else {
+            console.log('Cloudinary upload success:', result?.public_id);
             resolve(result);
           }
         },
       );
 
       uploadStream.on('error', (error) => {
+        console.error('Upload stream error:', error);
         reject(error);
       });
 
-      uploadStream.end(buffer);
+      // Write buffer to stream
+      uploadStream.write(buffer);
+      uploadStream.end();
     });
 
     const uploadResult = result as any;
@@ -89,19 +101,24 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+      error instanceof Error ? error.message : 'Unknown error occurred';
 
-    // Return more specific error based on the error type
+    console.error('Upload route error:', errorMessage, error);
+
+    // Return specific error messages based on the error type
     if (errorMessage.includes('Unauthorized')) {
       return NextResponse.json(
-        { error: 'Cloudinary authentication failed. Check API credentials.' },
+        {
+          error:
+            'Cloudinary authentication failed. Verify API credentials on Vercel.',
+        },
         { status: 401 },
       );
     }
 
     if (errorMessage.includes('timeout')) {
       return NextResponse.json(
-        { error: 'Upload timed out. Please try again.' },
+        { error: 'Upload timed out. Please try again with a smaller image.' },
         { status: 504 },
       );
     }
