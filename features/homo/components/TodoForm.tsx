@@ -1,12 +1,13 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import Image from 'next/image';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -28,40 +29,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Loader2, Sparkles } from 'lucide-react';
-
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(1, 'Title is required')
-    .max(100, 'Maximum 100 characters'),
-  description: z.string().max(500, 'Maximum 500 characters').optional(),
-  priority: z.enum(['low', 'medium', 'high']),
-  dueDate: z.date().optional(),
-});
+import { CalendarIcon, Loader2, Sparkles, Upload, X } from 'lucide-react';
+import { formSchema } from '@/features/homo/schema/formSchema';
+import { priorityConfig } from '@/features/homo/lib/priority-config';
 
 type FormValues = z.infer<typeof formSchema>;
-
-const priorityConfig = [
-  {
-    value: 'low',
-    label: 'Low',
-    dot: 'bg-emerald-400',
-    submit: 'bg-emerald-500 hover:bg-emerald-600 text-white',
-  },
-  {
-    value: 'medium',
-    label: 'Medium',
-    dot: 'bg-amber-400',
-    submit: 'bg-amber-500 hover:bg-amber-600 text-white',
-  },
-  {
-    value: 'high',
-    label: 'High',
-    dot: 'bg-rose-400',
-    submit: 'bg-rose-500 hover:bg-rose-600 text-white',
-  },
-] as const;
 
 interface TodoFormProps {
   mode: 'create' | 'edit';
@@ -71,6 +43,7 @@ interface TodoFormProps {
     description?: string;
     priority: 'low' | 'medium' | 'high';
     dueDate?: number;
+    imageUrl?: string;
   };
   onSuccess?: () => void;
 }
@@ -85,6 +58,10 @@ export default function TodoForm({
   const update = useMutation(api.todos.update);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    initialData?.imageUrl || null,
+  );
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     const id = localStorage.getItem('userId');
@@ -98,6 +75,7 @@ export default function TodoForm({
       description: initialData?.description ?? '',
       priority: initialData?.priority ?? 'medium',
       dueDate: initialData?.dueDate ? new Date(initialData.dueDate) : undefined,
+      imageUrl: initialData?.imageUrl ?? '',
     },
   });
 
@@ -110,13 +88,61 @@ export default function TodoForm({
         dueDate: initialData.dueDate
           ? new Date(initialData.dueDate)
           : undefined,
+        imageUrl: initialData.imageUrl ?? '',
       });
+      setImagePreview(initialData.imageUrl || null);
     }
   }, [initialData, form]);
 
   const isSubmitting = form.formState.isSubmitting;
   const selectedPriority = form.watch('priority');
   const activeConfig = priorityConfig.find((p) => p.value === selectedPriority);
+
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-todo-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      form.setValue('imageUrl', data.url);
+      setImagePreview(data.url);
+      toast.success('Image uploaded successfully!');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload image',
+      );
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   async function onSubmit(values: FormValues) {
     try {
@@ -131,6 +157,7 @@ export default function TodoForm({
           priority: values.priority,
           dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
           userId,
+          imageUrl: values.imageUrl || undefined,
         });
         toast.success('Todo added successfully! ✓');
       } else if (mode === 'edit' && todoId) {
@@ -141,12 +168,14 @@ export default function TodoForm({
             description: values.description || undefined,
             priority: values.priority,
             dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
+            imageUrl: values.imageUrl || undefined,
           },
         });
         toast.success('Todo updated!');
       }
 
       form.reset();
+      setImagePreview(null);
       onSuccess?.();
     } catch {
       toast.error('Something went wrong. Please try again.');
@@ -154,7 +183,7 @@ export default function TodoForm({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full mb-20">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-4 w-4 text-muted-foreground" />
@@ -208,6 +237,81 @@ export default function TodoForm({
                     {...field}
                   />
                 </FormControl>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+
+          {/* Image Upload */}
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={() => (
+              <FormItem>
+                <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                  Image{' '}
+                  <span className="normal-case font-normal text-muted-foreground/70">
+                    (optional)
+                  </span>
+                </FormLabel>
+                <div className="space-y-3">
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="relative w-full rounded-sm overflow-hidden bg-muted/40 aspect-video">
+                      <Image
+                        src={imagePreview}
+                        alt="Todo preview"
+                        fill
+                        className="object-cover"
+                        quality={85}
+                        priority={false}
+                        sizes="(max-width: 640px) 100vw, 800px"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          form.setValue('imageUrl', '');
+                          setImagePreview(null);
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-[#FF9D4D] hover:bg-[#FF9D4D] cursor-pointer rounded-sm text-white transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Upload Input */}
+                  {!imagePreview && (
+                    <FormControl>
+                      <label className="relative block w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={isUploadingImage}
+                          className="hidden"
+                        />
+                        <div className="flex items-center justify-center gap-3 w-full h-32 rounded-lg border-2 border-dashed border-border/50 bg-muted/40 hover:bg-muted/60 cursor-pointer transition-all hover:border-border disabled:opacity-50 disabled:cursor-not-allowed">
+                          {isUploadingImage ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                Uploading...
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-5 w-5 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                Click to upload image
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </FormControl>
+                  )}
+                </div>
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
