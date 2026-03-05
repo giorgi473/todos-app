@@ -74,10 +74,11 @@ export const create = mutation({
     dueDate: v.optional(v.number()),
     userId: v.string(),
     imageUrl: v.optional(v.string()),
+    imageUrls: v.optional(v.array(v.string())),
   },
   handler: async (
     ctx,
-    { title, description, priority, dueDate, userId, imageUrl },
+    { title, description, priority, dueDate, userId, imageUrl, imageUrls },
   ) => {
     return await ctx.db.insert('todos', {
       title,
@@ -86,6 +87,7 @@ export const create = mutation({
       dueDate,
       userId,
       imageUrl,
+      imageUrls,
       completed: false,
       createdAt: Date.now(),
     });
@@ -106,6 +108,7 @@ export const update = mutation({
         dueDate: v.optional(v.number()),
         userId: v.optional(v.string()),
         imageUrl: v.optional(v.string()),
+        imageUrls: v.optional(v.array(v.string())),
       }),
     ),
   },

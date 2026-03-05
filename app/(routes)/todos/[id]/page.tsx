@@ -82,6 +82,8 @@ export default function EditTodoPage({ params }: { params: ParamsPromise }) {
           description: todo.description,
           priority: todo.priority,
           dueDate: todo.dueDate,
+          imageUrl: todo.imageUrl,
+          imageUrls: todo.imageUrls,
         }}
         onSuccess={() => router.push('/todos')}
       />
