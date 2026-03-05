@@ -34,6 +34,7 @@ export default defineSchema({
     priority: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
     dueDate: v.optional(v.number()), // timestamp
     userId: v.optional(v.string()),
+    imageUrl: v.optional(v.string()), // Cloudinary image URL
     createdAt: v.number(), // timestamp
   })
     .index('by_completed', ['completed'])

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import TodoForm from '@/features/homo/components/TodoForm';
 import { ArrowLeft } from 'lucide-react';
+import { Loading } from '@/components/shared/Loading';
 
 type ParamsPromise = Promise<{ id: string }>;
 function isValidConvexId(id: string): boolean {
@@ -49,7 +50,12 @@ export default function EditTodoPage({ params }: { params: ParamsPromise }) {
       : 'skip',
   );
 
-  if (!resolvedId || todo === undefined) return <div>Loading...</div>;
+  if (!resolvedId || todo === undefined)
+    return (
+      <div>
+        <Loading />
+      </div>
+    );
   if (!todo) {
     notFound();
   }

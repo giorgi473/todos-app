@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Id } from '@/convex/_generated/dataModel';
 import { format } from 'date-fns';
@@ -48,6 +49,7 @@ interface Todo {
   priority: 'low' | 'medium' | 'high';
   dueDate?: number;
   createdAt: number;
+  imageUrl?: string;
 }
 
 interface TodoCardProps {
@@ -112,11 +114,7 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
             >
               {todo.title}
             </CardTitle>
-            {todo.description && (
-              <CardDescription className="mt-1 text-base leading-relaxed text-zinc-600 dark:text-muted-foreground">
-                {todo.description}
-              </CardDescription>
-            )}
+
             <CardAction className="shrink-0">
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
@@ -150,6 +148,27 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
             </CardAction>
           </CardHeader>
         </div>
+        <CardHeader className="px-0 mt-0">
+          {todo.description && (
+            <CardDescription className="text-base leading-relaxed text-zinc-600 dark:text-muted-foreground">
+              {todo.description}
+            </CardDescription>
+          )}
+          {/* Image Preview */}
+          {todo.imageUrl && (
+            <div className="mt-3 rounded-sm overflow-hidden bg-muted/40 aspect-video w-full">
+              <Image
+                src={todo.imageUrl}
+                alt={todo.title}
+                width={1200}
+                height={675}
+                className="w-full h-full object-cover"
+                priority={true}
+                quality={85}
+              />
+            </div>
+          )}
+        </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3 px-0 pt-0">
           <span
             className={cn(

@@ -73,14 +73,19 @@ export const create = mutation({
     priority: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
     dueDate: v.optional(v.number()),
     userId: v.string(),
+    imageUrl: v.optional(v.string()),
   },
-  handler: async (ctx, { title, description, priority, dueDate, userId }) => {
+  handler: async (
+    ctx,
+    { title, description, priority, dueDate, userId, imageUrl },
+  ) => {
     return await ctx.db.insert('todos', {
       title,
       description,
       priority,
       dueDate,
       userId,
+      imageUrl,
       completed: false,
       createdAt: Date.now(),
     });
@@ -100,6 +105,7 @@ export const update = mutation({
         ),
         dueDate: v.optional(v.number()),
         userId: v.optional(v.string()),
+        imageUrl: v.optional(v.string()),
       }),
     ),
   },
