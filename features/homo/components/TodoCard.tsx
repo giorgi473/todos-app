@@ -90,7 +90,7 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
         className={cn(
           'group flex w-full flex-col gap-4 border-zinc-200 bg-zinc-200 rounded-md px-4 py-5 shadow-md shadow-zinc-300/60 ring-1 ring-zinc-200/80 dark:border-border dark:bg-card dark:shadow-sm dark:shadow-transparent dark:ring-0 md:px-6 select-none transition-shadow',
           isActive &&
-            'ring-2 ring-[#FF9D4D] shadow-lg shadow-[#FF9D4D]/15 dark:ring-[#FF9D4D]',
+          'ring-2 ring-[#FF9D4D] shadow-lg shadow-[#FF9D4D]/15 dark:ring-[#FF9D4D]',
         )}
       >
         <div className="flex flex-row items-start gap-4">
@@ -110,7 +110,7 @@ export function TodoCard({ todo, onToggle, onDelete }: TodoCardProps) {
               className={cn(
                 'text-lg font-bold leading-tight truncate text-wrap text-zinc-900 dark:text-card-foreground',
                 todo.completed &&
-                  'line-through text-zinc-500 dark:text-muted-foreground/70',
+                'line-through text-zinc-500 dark:text-muted-foreground/70',
               )}
             >
               {todo.title}
