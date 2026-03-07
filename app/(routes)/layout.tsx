@@ -16,13 +16,13 @@ export default function RoutesLayout({
   return (
     <>
       <Header isAskAiOpen={isAskAiOpen} setIsAskAiOpen={setIsAskAiOpen} />
-      <div className="fixed top-20 h-auto w-full overflow-hidden -z-10">
-          <Particles/>
+      <div className="fixed top-20 hidden xl:inline-block h-auto w-full overflow-hidden -z-10">
+        <Particles />
       </div>
       <aside className="relative">
         <div
           className={`fixed bottom-10 right-10 z-50 ${isAskAiOpen ? 'hidden' : 'flex'}`}
-          >
+        >
           <AskAi isOpen={isAskAiOpen} onOpenChange={setIsAskAiOpen} label="" />
         </div>
       </aside>
