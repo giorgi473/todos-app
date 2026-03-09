@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Header from '@/components/shared/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import AskAi from '@/components/shared/AskAi';
+import SnowCanvas from '@/components/SnowCanvas';
 import { Particles } from '@/components/ui/particles';
 
 export default function RoutesLayout({
@@ -16,6 +17,7 @@ export default function RoutesLayout({
   return (
     <>
       <Header isAskAiOpen={isAskAiOpen} setIsAskAiOpen={setIsAskAiOpen} />
+      <SnowCanvas />
       <div className="fixed top-20 hidden xl:inline-block h-auto w-full overflow-hidden -z-10">
         <Particles />
       </div>
